@@ -1,0 +1,140 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?  @unique
+  phone     String   @unique
+  role      String   @default("CLIENT") // "ADMIN" ou "CLIENT"
+  password  String?  // Hash da senha
+  
+  // CRM / Dados Fiscais
+  personType String  @default("PF") // "PF" ou "PJ"
+  document   String? // CPF ou CNPJ
+  tradeName  String? // Nome Fantasia (apenas PJ)
+  
+  // Endereço para Delivery
+  address       String?
+  neighborhood  String?
+  city          String?
+  
+  orders    Order[]
+  appointments Appointment[]
+  
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  price         Float
+  stock         Float    @default(0)
+  minStock      Float    @default(10) // Limite para alerta (Padrão 10 do sistema)
+  image         String?  // URL da imagem do produto ou insumo
+  isRawMaterial Boolean  @default(false)
+  
+  // Relacionamento: Componentes que formam este produto
+  ingredients   ProductIngredient[] @relation("ProductToIngredient")
+  
+  // Relacionamento: Em quais produtos este insumo é usado
+  usedIn        ProductIngredient[] @relation("IngredientInProduct")
+
+  stockLogs     StockLog[]
+  orderItems    OrderItem[]
+  createdAt     DateTime @default(now())
+}
+
+model StockLog {
+  id              String   @id @default(uuid())
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  quantityChange  Float    // Valor positivo ou negativo
+  type            String   // "MANUAL", "SALE", "BOM_CONSUMPTION"
+  justification   String
+  
+  createdAt       DateTime @default(now())
+}
+
+model ProductIngredient {
+  id           String  @id @default(uuid())
+  
+  // O produto final (ex: Bolo)
+  productId    String
+  product      Product @relation("ProductToIngredient", fields: [productId], references: [id], onDelete: Cascade)
+  
+  // O insumo (ex: Farinha)
+  ingredientId String
+  ingredient   Product @relation("IngredientInProduct", fields: [ingredientId], references: [id])
+  
+  quantity     Float   // Quanto desse insumo vai no produto (ex: 0.5kg)
+}
+
+// Configurações globais do sistema
+model GlobalSettings {
+  id                       String   @id @default("default")
+  companyName              String   @default("Minha Loja")
+  companyLogoUrl           String?
+  defaultMinStock          Float    @default(10)
+  decimalSeparator         String   @default(".") // Novo campo para separar decimal (, ou .)
+  defaultDeliveryFee       Float    @default(0)   // Taxa de frete padrão
+  defaultSchedulingEnabled Boolean  @default(false) // Agendamento ativo por padrão nos pedidos
+  
+  updatedAt                DateTime @default(now())
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  totalAmount Float
+  status      String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  isManual    Boolean  @default(false) // True se foi o admin que criou
+  
+  orderType   String   @default("RETIRADA") // "RETIRADA" or "DELIVERY"
+  scheduledAt DateTime?
+  deliveryFee Float    @default(0)
+  observation String?
+  
+  items       OrderItem[]
+  appointment Appointment? // Pode ou não estar atrelado a um agendamento
+  
+  createdAt   DateTime @default(now())
+}
+
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  quantity    Int
+  price       Float
+  observation String? // Nova coluna de observação individual
+  createdAt   DateTime @default(now())
+
+  order       Order    @relation(fields: [orderId], references: [id])
+  product     Product  @relation(fields: [productId], references: [id])
+}
+
+model Appointment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  orderId   String?  @unique
+  order     Order?   @relation(fields: [orderId], references: [id])
+  
+  startTime DateTime
+  endTime   DateTime
+  status    String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+}
