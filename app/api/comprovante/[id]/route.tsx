@@ -2,6 +2,8 @@ import { ImageResponse } from 'next/og';
 import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
