@@ -10,13 +10,38 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  SUPERADMIN
+  TENANT
+  CUSTOMER
+}
+
+model Tenant {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique // URL path: /loja/{slug}
+  plan        String   @default("FREE")
+  status      String   @default("ACTIVE") // ACTIVE, SUSPENDED
+  createdAt   DateTime @default(now())
+  
+  users       User[]
+  products    Product[]
+  orders      Order[]
+  settings    GlobalSettings?
+  stockLogs   StockLog[]
+  appointments Appointment[]
+}
+
 model User {
   id        String   @id @default(uuid())
+  tenantId  String?  // Pode ser nulo se for um SUPERADMIN
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
   name      String
   email     String?  @unique
-  phone     String   @unique
-  role      String   @default("CLIENT") // "ADMIN" ou "CLIENT"
-  password  String?  // Hash da senha
+  phone     String   // Não é mais unique globalmente, pois o mesmo cliente pode comprar em duas lojas diferentes
+  role      Role     @default(CUSTOMER)
+  password  String?  // Hash da senha (para Lojistas/Supabase Auth)
   
   // CRM / Dados Fiscais
   personType String  @default("PF") // "PF" ou "PJ"
@@ -32,22 +57,25 @@ model User {
   appointments Appointment[]
   
   createdAt DateTime @default(now())
+
+  // Um cliente pode usar o mesmo telefone na mesma loja, mas não dois clientes com o mesmo telefone na mesma loja.
+  @@unique([tenantId, phone])
 }
 
 model Product {
   id            String   @id @default(uuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
   name          String
   description   String?
   price         Float
   stock         Float    @default(0)
-  minStock      Float    @default(10) // Limite para alerta (Padrão 10 do sistema)
-  image         String?  // URL da imagem do produto ou insumo
+  minStock      Float    @default(10)
+  image         String?
   isRawMaterial Boolean  @default(false)
   
-  // Relacionamento: Componentes que formam este produto
   ingredients   ProductIngredient[] @relation("ProductToIngredient")
-  
-  // Relacionamento: Em quais produtos este insumo é usado
   usedIn        ProductIngredient[] @relation("IngredientInProduct")
 
   stockLogs     StockLog[]
@@ -57,10 +85,13 @@ model Product {
 
 model StockLog {
   id              String   @id @default(uuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
   productId       String
   product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   
-  quantityChange  Float    // Valor positivo ou negativo
+  quantityChange  Float
   type            String   // "MANUAL", "SALE", "BOM_CONSUMPTION"
   justification   String
   
@@ -70,71 +101,79 @@ model StockLog {
 model ProductIngredient {
   id           String  @id @default(uuid())
   
-  // O produto final (ex: Bolo)
   productId    String
   product      Product @relation("ProductToIngredient", fields: [productId], references: [id], onDelete: Cascade)
   
-  // O insumo (ex: Farinha)
   ingredientId String
   ingredient   Product @relation("IngredientInProduct", fields: [ingredientId], references: [id])
   
-  quantity     Float   // Quanto desse insumo vai no produto (ex: 0.5kg)
+  quantity     Float
 }
 
-// Configurações globais do sistema
 model GlobalSettings {
-  id                       String   @id @default("default")
+  id                       String   @id @default(uuid())
+  tenantId                 String   @unique
+  tenant                   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
   companyName              String   @default("Minha Loja")
   companyLogoUrl           String?
   defaultMinStock          Float    @default(10)
-  decimalSeparator         String   @default(".") // Novo campo para separar decimal (, ou .)
-  defaultDeliveryFee       Float    @default(0)   // Taxa de frete padrão
-  defaultSchedulingEnabled Boolean  @default(false) // Agendamento ativo por padrão nos pedidos
+  decimalSeparator         String   @default(".")
+  defaultDeliveryFee       Float    @default(0)
+  defaultSchedulingEnabled Boolean  @default(false)
   
   updatedAt                DateTime @default(now())
 }
 
 model Order {
   id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
   userId      String
   user        User     @relation(fields: [userId], references: [id])
+  
   totalAmount Float
   status      String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
-  isManual    Boolean  @default(false) // True se foi o admin que criou
+  isManual    Boolean  @default(false)
   
-  orderType   String   @default("RETIRADA") // "RETIRADA" or "DELIVERY"
+  orderType   String   @default("RETIRADA") // RETIRADA, DELIVERY
   scheduledAt DateTime?
   deliveryFee Float    @default(0)
   observation String?
   
   items       OrderItem[]
-  appointment Appointment? // Pode ou não estar atrelado a um agendamento
+  appointment Appointment?
   
   createdAt   DateTime @default(now())
 }
-
 
 model OrderItem {
   id          String   @id @default(cuid())
   orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
   productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
   quantity    Int
   price       Float
-  observation String? // Nova coluna de observação individual
+  observation String?
   createdAt   DateTime @default(now())
-
-  order       Order    @relation(fields: [orderId], references: [id])
-  product     Product  @relation(fields: [productId], references: [id])
 }
 
 model Appointment {
   id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+  
   orderId   String?  @unique
-  order     Order?   @relation(fields: [orderId], references: [id])
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
   startTime DateTime
   endTime   DateTime
-  status    String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  status    String   @default("SCHEDULED")
 }
