@@ -11,6 +11,7 @@ interface OrderItemInput {
 }
 
 export async function createManualOrder(data: {
+  tenantId: string;
   userId: string;
   orderType: string; // "RETIRADA" or "DELIVERY"
   status?: string;   // "RECEIVED", "PREPARING", "DONE"
@@ -27,6 +28,7 @@ export async function createManualOrder(data: {
       // 1. Criar o pedido
       const newOrder = await tx.order.create({
         data: {
+          tenantId: data.tenantId,
           userId: data.userId,
           totalAmount,
           status: data.status || "RECEIVED",
@@ -57,6 +59,7 @@ export async function createManualOrder(data: {
         // Registrar Log de saída de venda (Sales)
         await tx.stockLog.create({
           data: {
+            tenantId: data.tenantId,
             productId: item.productId,
             quantityChange: -Math.abs(item.quantity),
             type: "SALE",
