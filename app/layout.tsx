@@ -1,20 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "SIS PqEmp - Gestão para Pequenos Empreendedores",
-  description: "A plataforma completa para pequenos empreendedores: estoque, pedidos, vitrine digital e agendamentos.",
+  title: "Vitrinia - O seu negócio sempre aberto",
+  description: "A evolução da vitrine física. Tecnologia simplificada para gerenciar seu pequeno negócio, estoque, pedidos e agendamentos.",
 };
 
 export default function RootLayout({
@@ -23,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="h-full font-sans">
+    <html lang="pt-BR" className={`${nunito.variable} h-full antialiased`}>
+      <body className="h-full font-sans bg-vitrinia-bg text-gray-900">
         {children}
       </body>
     </html>

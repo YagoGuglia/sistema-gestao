@@ -8,8 +8,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  /* Vitrinia Brand Colors */
+  --color-vitrinia-purple: #6C5CE7;
+  --color-vitrinia-orange: #FD7272;
+  --color-vitrinia-green: #00B894;
+  --color-vitrinia-bg: #F8F9FA;
+  --color-vitrinia-dark: #1C134A;
 }
 
 body {
