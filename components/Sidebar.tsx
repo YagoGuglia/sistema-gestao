@@ -11,7 +11,9 @@ import {
   Settings, 
   Menu, 
   X,
-  PlusCircle
+  PlusCircle,
+  Building2,
+  Store
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -22,6 +24,7 @@ const menuItems = [
   { name: "Pedidos", href: "/admin/pedidos", icon: ShoppingCart },
   { name: "Agenda", href: "/admin/agenda", icon: Calendar },
   { name: "Clientes", href: "/admin/clientes", icon: Users },
+  { name: "Empresa", href: "/admin/empresa", icon: Building2 },
   { name: "Configurações", href: "/admin/config", icon: Settings },
 ];
 
@@ -54,7 +57,7 @@ export function Sidebar() {
       )}>
         <div className="flex flex-col h-full p-6">
           <div className="mb-10">
-            <h1 className="text-2xl font-bold text-blue-600 tracking-tight">SIS PqEmp</h1>
+            <h1 className="text-2xl font-bold text-vitrinia-purple tracking-tight">vitrinia</h1>
             <p className="text-xs text-gray-500 font-medium">Gestão para Pequenos Negócios</p>
           </div>
 

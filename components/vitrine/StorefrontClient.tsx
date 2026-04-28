@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { ProductCard } from "./ProductCard";
 import { ShoppingBag } from "lucide-react";
+import { useCart } from "./CartContext";
+import { useParams, useRouter } from "next/navigation";
 
 interface Product {
   id: string;
@@ -13,12 +14,12 @@ interface Product {
 }
 
 export function StorefrontClient({ products }: { products: Product[] }) {
-  const [cartCount, setCartCount] = useState(0);
-  const [cartTotal, setCartTotal] = useState(0);
+  const { cartCount, cartTotal, addToCart } = useCart();
+  const params = useParams();
+  const router = useRouter();
 
   const handleAddToCart = (product: Product) => {
-    setCartCount(prev => prev + 1);
-    setCartTotal(prev => prev + product.price);
+    addToCart(product);
   };
 
   return (
@@ -49,7 +50,9 @@ export function StorefrontClient({ products }: { products: Product[] }) {
       {cartCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-transparent z-50 pointer-events-none">
           <div className="max-w-3xl mx-auto">
-            <button className="w-full bg-vitrinia-green text-white font-bold rounded-2xl py-4 px-6 flex items-center justify-between shadow-lg shadow-vitrinia-green/30 hover:bg-[#00a382] transition-colors pointer-events-auto active:scale-[0.98]">
+            <button 
+              onClick={() => router.push(`/loja/${params.slug}/checkout`)}
+              className="w-full bg-vitrinia-green text-white font-bold rounded-2xl py-4 px-6 flex items-center justify-between shadow-lg shadow-vitrinia-green/30 hover:bg-[#00a382] transition-colors pointer-events-auto active:scale-[0.98]">
               <div className="flex items-center">
                 <div className="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center mr-3">
                   {cartCount}

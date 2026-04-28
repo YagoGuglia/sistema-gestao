@@ -17,45 +17,46 @@ enum Role {
 }
 
 model Tenant {
-  id          String   @id @default(uuid())
-  name        String
-  slug        String   @unique // URL path: /loja/{slug}
-  plan        String   @default("FREE")
-  status      String   @default("ACTIVE") // ACTIVE, SUSPENDED
-  createdAt   DateTime @default(now())
-  
-  users       User[]
-  products    Product[]
-  orders      Order[]
-  settings    GlobalSettings?
-  stockLogs   StockLog[]
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique // URL path: /loja/{slug}
+  plan      String   @default("FREE")
+  status    String   @default("ACTIVE") // ACTIVE, SUSPENDED
+  createdAt DateTime @default(now())
+
+  users        User[]
+  products     Product[]
+  orders       Order[]
+  settings     GlobalSettings?
+  stockLogs    StockLog[]
   appointments Appointment[]
+  Coupon       Coupon[]
 }
 
 model User {
-  id        String   @id @default(uuid())
-  tenantId  String?  // Pode ser nulo se for um SUPERADMIN
-  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  name      String
-  email     String?  @unique
-  phone     String   // Não é mais unique globalmente, pois o mesmo cliente pode comprar em duas lojas diferentes
-  role      Role     @default(CUSTOMER)
-  password  String?  // Hash da senha (para Lojistas/Supabase Auth)
-  
+  id       String  @id @default(uuid())
+  tenantId String? // Pode ser nulo se for um SUPERADMIN
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name     String
+  email    String? @unique
+  phone    String // Não é mais unique globalmente, pois o mesmo cliente pode comprar em duas lojas diferentes
+  role     Role    @default(CUSTOMER)
+  password String? // Hash da senha (para Lojistas/Supabase Auth)
+
   // CRM / Dados Fiscais
   personType String  @default("PF") // "PF" ou "PJ"
   document   String? // CPF ou CNPJ
   tradeName  String? // Nome Fantasia (apenas PJ)
-  
+
   // Endereço para Delivery
-  address       String?
-  neighborhood  String?
-  city          String?
-  
-  orders    Order[]
+  address      String?
+  neighborhood String?
+  city         String?
+
+  orders       Order[]
   appointments Appointment[]
-  
+
   createdAt DateTime @default(now())
 
   // Um cliente pode usar o mesmo telefone na mesma loja, mas não dois clientes com o mesmo telefone na mesma loja.
@@ -63,99 +64,99 @@ model User {
 }
 
 model Product {
-  id            String   @id @default(uuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   name          String
   description   String?
   price         Float
-  stock         Float    @default(0)
-  minStock      Float    @default(10)
+  stock         Float   @default(0)
+  minStock      Float   @default(10)
   image         String?
-  isRawMaterial Boolean  @default(false)
-  
-  ingredients   ProductIngredient[] @relation("ProductToIngredient")
-  usedIn        ProductIngredient[] @relation("IngredientInProduct")
+  isRawMaterial Boolean @default(false)
 
-  stockLogs     StockLog[]
-  orderItems    OrderItem[]
-  createdAt     DateTime @default(now())
+  ingredients ProductIngredient[] @relation("ProductToIngredient")
+  usedIn      ProductIngredient[] @relation("IngredientInProduct")
+
+  stockLogs  StockLog[]
+  orderItems OrderItem[]
+  createdAt  DateTime    @default(now())
 }
 
 model StockLog {
-  id              String   @id @default(uuid())
-  tenantId        String
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  productId       String
-  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  quantityChange  Float
-  type            String   // "MANUAL", "SALE", "BOM_CONSUMPTION"
-  justification   String
-  
-  createdAt       DateTime @default(now())
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  quantityChange Float
+  type           String // "MANUAL", "SALE", "BOM_CONSUMPTION"
+  justification  String
+
+  createdAt DateTime @default(now())
 }
 
 model ProductIngredient {
-  id           String  @id @default(uuid())
-  
-  productId    String
-  product      Product @relation("ProductToIngredient", fields: [productId], references: [id], onDelete: Cascade)
-  
+  id String @id @default(uuid())
+
+  productId String
+  product   Product @relation("ProductToIngredient", fields: [productId], references: [id], onDelete: Cascade)
+
   ingredientId String
   ingredient   Product @relation("IngredientInProduct", fields: [ingredientId], references: [id])
-  
-  quantity     Float
+
+  quantity Float
 }
 
 model GlobalSettings {
-  id                       String   @id @default(uuid())
-  tenantId                 String   @unique
-  tenant                   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  companyName              String   @default("Minha Loja")
+  id       String @id @default(uuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  companyName              String  @default("Minha Loja")
   companyLogoUrl           String?
-  defaultMinStock          Float    @default(10)
-  decimalSeparator         String   @default(".")
-  defaultDeliveryFee       Float    @default(0)
-  defaultSchedulingEnabled Boolean  @default(false)
-  
-  updatedAt                DateTime @default(now())
+  defaultMinStock          Float   @default(10)
+  decimalSeparator         String  @default(".")
+  defaultDeliveryFee       Float   @default(0)
+  defaultSchedulingEnabled Boolean @default(false)
+
+  updatedAt DateTime @default(now())
 }
 
 model Order {
-  id          String   @id @default(uuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
   totalAmount Float
-  status      String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
-  isManual    Boolean  @default(false)
-  
-  orderType   String   @default("RETIRADA") // RETIRADA, DELIVERY
+  status      String  @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  isManual    Boolean @default(false)
+
+  orderType   String    @default("RETIRADA") // RETIRADA, DELIVERY
   scheduledAt DateTime?
-  deliveryFee Float    @default(0)
+  deliveryFee Float     @default(0)
   observation String?
-  
+
   items       OrderItem[]
   appointment Appointment?
-  
-  createdAt   DateTime @default(now())
+
+  createdAt DateTime @default(now())
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
   quantity    Int
   price       Float
   observation String?
@@ -163,17 +164,36 @@ model OrderItem {
 }
 
 model Appointment {
-  id        String   @id @default(uuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  
-  orderId   String?  @unique
-  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  orderId String? @unique
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
   startTime DateTime
   endTime   DateTime
   status    String   @default("SCHEDULED")
+}
+
+model Coupon {
+  id       String @id @default(uuid())
+  code     String
+  discount Float // percentage or fixed value
+  type     String @default("PERCENTAGE") // PERCENTAGE or FIXED
+
+  // Se tenantId for nulo, o cupom é da plataforma (Super Admin).
+  // Se preenchido, é um cupom da loja para os clientes dela.
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  // O código deve ser único por loja (tenantId + code)
+  @@unique([tenantId, code])
 }
