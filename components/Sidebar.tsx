@@ -17,7 +17,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { name: "Dashboard", href: "/", icon: BarChart3 },
+  { name: "Dashboard", href: "/admin", icon: BarChart3 },
   { name: "Estoque", href: "/admin/produtos", icon: Package },
   { name: "Pedidos", href: "/admin/pedidos", icon: ShoppingCart },
   { name: "Agenda", href: "/admin/agenda", icon: Calendar },

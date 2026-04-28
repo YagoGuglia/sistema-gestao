@@ -1,12 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // se o parâmetro 'next' for passado, usa ele como destino após login
-  const next = searchParams.get('next') ?? '/admin'
+  const plano = searchParams.get('plano') || ''
 
   if (code) {
     const cookieStore = await cookies()
@@ -33,15 +33,25 @@ export async function GET(request: Request) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error, data } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      // Login com sucesso
-      // Aqui teremos que verificar se o lojista já tem uma loja criada (Tenant)
-      // Se não tiver, mandaremos para /onboarding
-      // Por enquanto, mandamos direto para /admin
+      // Verificar se o lojista já tem uma loja criada (Tenant)
+      let next = '/admin'
+
+      if (data.user?.email) {
+        const existingUser = await prisma.user.findFirst({
+          where: { email: data.user.email, role: 'TENANT' },
+          include: { tenant: true },
+        })
+
+        if (!existingUser?.tenantId) {
+          // Ainda não tem loja — enviar para onboarding com plano selecionado
+          next = `/onboarding${plano ? `?plano=${plano}` : ''}`
+        }
+      }
       
-      const forwardedHost = request.headers.get('x-forwarded-host') // Para suportar Vercel deploy proxy
+      const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalhost = process.env.NODE_ENV === 'development'
       
       if (isLocalhost) {

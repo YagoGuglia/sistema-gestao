@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createTenantAction } from "@/app/actions/onboarding-actions";
 
-export function OnboardingForm({ email, name }: { email: string, name: string }) {
+export function OnboardingForm({ email, name, plano }: { email: string, name: string, plano: string }) {
   const [storeName, setStoreName] = useState("");
   const [slug, setSlug] = useState("");
   const [phone, setPhone] = useState("");
@@ -23,7 +23,7 @@ export function OnboardingForm({ email, name }: { email: string, name: string })
     setError("");
 
     try {
-      const result = await createTenantAction({ storeName, slug, phone, email, name });
+      const result = await createTenantAction({ storeName, slug, phone, email, name, plano });
       if (result.error) {
         setError(result.error);
         setLoading(false);
@@ -68,7 +68,7 @@ export function OnboardingForm({ email, name }: { email: string, name: string })
         </label>
         <div className="mt-1 flex rounded-md shadow-sm">
           <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-            sispqemp.com/
+            sistema-gestao-pink.vercel.app/
           </span>
           <input
             type="text"

@@ -8,10 +8,11 @@ interface CreateTenantInput {
   phone: string;
   email: string;
   name: string;
+  plano?: string;
 }
 
 export async function createTenantAction(input: CreateTenantInput) {
-  const { storeName, slug, phone, email, name } = input;
+  const { storeName, slug, phone, email, name, plano } = input;
 
   try {
     // Verificar se o slug já existe
@@ -33,6 +34,7 @@ export async function createTenantAction(input: CreateTenantInput) {
         data: {
           name: storeName,
           slug,
+          plan: plano ?? "free",
         },
       });
 
