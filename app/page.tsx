@@ -23,12 +23,12 @@ export default function LandingPage() {
       {/* ── NAVBAR ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm shadow-blue-200">
-              <Package size={16} className="text-white" />
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
+            <div className="w-8 h-8 bg-vitrinia-purple rounded-lg flex items-center justify-center shadow-sm">
+              <span className="text-white font-black text-sm">V</span>
             </div>
-            <span className="font-black text-gray-900 text-lg tracking-tight">SIS PqEmp</span>
-          </div>
+            <span className="font-black text-gray-900 text-lg tracking-tight">vitrinia</span>
+          </Link>
 
           <div className="hidden md:flex items-center gap-1 bg-gray-50 rounded-xl px-2 py-1.5 border border-gray-100">
             <Globe size={12} className="text-gray-400" />
@@ -36,8 +36,8 @@ export default function LandingPage() {
           </div>
 
           <Link
-            href="/login"
-            className="inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-md shadow-blue-200"
+            href="/admin"
+            className="inline-flex items-center gap-2 bg-vitrinia-purple text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-vitrinia-purple/90 transition-all active:scale-95 shadow-md"
           >
             Gerenciar meu negócio
             <ArrowRight size={15} />
@@ -61,7 +61,7 @@ export default function LandingPage() {
 
           <h1 className="text-5xl md:text-7xl font-black text-gray-900 leading-[1.05] tracking-tight mb-6">
             Gerencie seu negócio{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-vitrinia-purple to-vitrinia-orange">
               com inteligência
             </span>
           </h1>
@@ -81,7 +81,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="#planos"
-              className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white font-black px-8 py-4 rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-xl shadow-blue-200 text-base"
+              className="inline-flex items-center justify-center gap-2 bg-vitrinia-purple text-white font-black px-8 py-4 rounded-2xl hover:bg-vitrinia-purple/90 transition-all active:scale-95 shadow-xl text-base"
             >
               Ver planos e começar
               <ArrowRight size={18} />
@@ -275,13 +275,15 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/40">
-                <Package size={20} className="text-white" />
-              </div>
-              <div>
-                <p className="font-black text-lg">SIS PqEmp</p>
-                <p className="text-xs text-gray-500">Gestão para Pequenos Empreendedores</p>
-              </div>
+              <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition">
+                <div className="w-10 h-10 bg-vitrinia-purple rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-black">V</span>
+                </div>
+                <div>
+                  <p className="font-black text-lg">vitrinia</p>
+                  <p className="text-xs text-gray-500">Gestão para Pequenos Empreendedores</p>
+                </div>
+              </Link>
             </div>
 
             <div className="flex items-center gap-3 bg-gray-800 rounded-2xl px-5 py-3 border border-gray-700">
@@ -291,7 +293,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-gray-600">© {new Date().getFullYear()} SIS PqEmp. Todos os direitos reservados.</p>
+            <p className="text-xs text-gray-600">© {new Date().getFullYear()} Vitrinia. Todos os direitos reservados.</p>
             <div className="flex items-center gap-6">
               <Link href="/login" className="text-xs text-gray-500 hover:text-gray-300 transition font-medium">
                 Acessar sistema

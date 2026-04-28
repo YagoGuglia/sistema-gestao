@@ -57,8 +57,13 @@ export function Sidebar() {
       )}>
         <div className="flex flex-col h-full p-6">
           <div className="mb-10">
-            <h1 className="text-2xl font-bold text-vitrinia-purple tracking-tight">vitrinia</h1>
-            <p className="text-xs text-gray-500 font-medium">Gestão para Pequenos Negócios</p>
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
+              <div className="w-7 h-7 bg-vitrinia-purple rounded-lg flex items-center justify-center">
+                <span className="text-white font-black text-xs">V</span>
+              </div>
+              <h1 className="text-2xl font-bold text-vitrinia-purple tracking-tight">vitrinia</h1>
+            </Link>
+            <p className="text-xs text-gray-500 font-medium mt-1">Gestão para Pequenos Negócios</p>
           </div>
 
           <nav className="flex-1 space-y-2">
