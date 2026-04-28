@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireTenant } from "@/lib/supabase/server";
 
 interface OrderItemInput {
   productId: string;
@@ -11,7 +12,6 @@ interface OrderItemInput {
 }
 
 export async function createManualOrder(data: {
-  tenantId: string;
   userId: string;
   orderType: string; // "RETIRADA" or "DELIVERY"
   status?: string;   // "RECEIVED", "PREPARING", "DONE"
@@ -21,6 +21,7 @@ export async function createManualOrder(data: {
   items: OrderItemInput[];
 }) {
   try {
+    const tenantId = await requireTenant();
     const totalItemsAmount = data.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const totalAmount = totalItemsAmount + data.deliveryFee;
 
@@ -28,7 +29,7 @@ export async function createManualOrder(data: {
       // 1. Criar o pedido
       const newOrder = await tx.order.create({
         data: {
-          tenantId: data.tenantId,
+          tenantId,
           userId: data.userId,
           totalAmount,
           status: data.status || "RECEIVED",
@@ -59,7 +60,7 @@ export async function createManualOrder(data: {
         // Registrar Log de saída de venda (Sales)
         await tx.stockLog.create({
           data: {
-            tenantId: data.tenantId,
+            tenantId,
             productId: item.productId,
             quantityChange: -Math.abs(item.quantity),
             type: "SALE",
@@ -133,6 +134,7 @@ export async function cancelOrder(orderId: string, justification: string) {
         });
         await tx.stockLog.create({
           data: {
+            tenantId: order.tenantId,
             productId: item.productId,
             quantityChange: Math.abs(item.quantity),
             type: "MANUAL",

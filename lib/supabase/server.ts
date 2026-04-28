@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { prisma } from "@/lib/prisma"
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -26,4 +27,15 @@ export async function createClient() {
       },
     }
   )
+}
+
+export async function requireTenant() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !user.email) throw new Error("Não autorizado");
+
+  const dbUser = await prisma.user.findUnique({ where: { email: user.email } });
+  if (!dbUser?.tenantId) throw new Error("Loja não encontrada ou usuário sem permissão.");
+
+  return dbUser.tenantId;
 }

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireTenant } from "@/lib/supabase/server";
 
 export async function adjustStock(productId: string, quantityChange: number, justification: string) {
   if (!justification || justification.length < 5) {
@@ -9,6 +10,7 @@ export async function adjustStock(productId: string, quantityChange: number, jus
   }
 
   try {
+    const tenantId = await requireTenant();
     const result = await prisma.$transaction(async (tx) => {
       // 1. Atualizar o estoque do produto
       const updatedProduct = await tx.product.update({
@@ -21,6 +23,7 @@ export async function adjustStock(productId: string, quantityChange: number, jus
       // 2. Criar o log de movimentação
       await tx.stockLog.create({
         data: {
+          tenantId,
           productId,
           quantityChange,
           type: "MANUAL",

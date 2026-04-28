@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireTenant } from "@/lib/supabase/server";
 
 interface IngredientInput {
   ingredientId: string;
@@ -9,6 +10,7 @@ interface IngredientInput {
 }
 
 export async function saveProduct(formData: FormData, ingredients: IngredientInput[]) {
+  const tenantId = await requireTenant();
   const id = formData.get("id") as string | null;
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
@@ -73,6 +75,7 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
       // Criar novo
       await prisma.product.create({
         data: { 
+          tenantId,
           name, 
           description, 
           price, 
@@ -111,8 +114,9 @@ export async function deleteProduct(id: string) {
 }
 
 export async function getInsumos() {
+  const tenantId = await requireTenant();
   return await prisma.product.findMany({
-    where: { isRawMaterial: true },
+    where: { isRawMaterial: true, tenantId },
     select: { id: true, name: true, stock: true },
     orderBy: { name: 'asc' }
   });

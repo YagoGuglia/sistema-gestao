@@ -2,13 +2,16 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireTenant } from "@/lib/supabase/server";
 
 export async function searchUsersGlobal(query: string) {
   if (!query || query.length < 2) return [];
   
   try {
+    const tenantId = await requireTenant();
     const users = await prisma.user.findMany({
       where: {
+        tenantId,
         OR: [
           { name: { contains: query } },
           { tradeName: { contains: query } },
@@ -29,8 +32,9 @@ export async function searchUserByPhone(phone: string) {
   if (!phone || phone.length < 10) return null;
   
   try {
+    const tenantId = await requireTenant();
     const user = await prisma.user.findUnique({
-      where: { phone }
+      where: { tenantId_phone: { tenantId, phone } }
     });
     return user;
   } catch (error) {
@@ -104,8 +108,10 @@ export async function upsertUser(data: {
        }
     }
 
+    const tenantId = await requireTenant();
+
     const user = await prisma.user.upsert({
-      where: { phone: data.phone },
+      where: { tenantId_phone: { tenantId, phone: data.phone } },
       update: {
         name: data.name,
         personType: data.personType || "PF",
@@ -124,7 +130,8 @@ export async function upsertUser(data: {
         address: data.address,
         neighborhood: data.neighborhood,
         city: data.city,
-        role: "CLIENT"
+        role: "CUSTOMER",
+        tenantId
       }
     });
     

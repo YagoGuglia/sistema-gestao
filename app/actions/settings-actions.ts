@@ -2,13 +2,15 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { requireTenant } from "@/lib/supabase/server";
 
 export async function getGlobalSettings() {
+  const tenantId = await requireTenant();
   const settings = await prisma.globalSettings.upsert({
-    where: { id: "default" },
+    where: { tenantId },
     update: {},
     create: {
-      id: "default",
+      tenantId,
       companyName: "Minha Loja",
       defaultMinStock: 10,
       decimalSeparator: ".",
@@ -30,8 +32,10 @@ export async function updateGlobalSettings(formData: FormData) {
 
   const defaultSchedulingEnabled = formData.get("defaultSchedulingEnabled") === "on";
 
+  const tenantId = await requireTenant();
+
   await prisma.globalSettings.update({
-    where: { id: "default" },
+    where: { tenantId },
     data: { defaultMinStock, decimalSeparator, defaultDeliveryFee, defaultSchedulingEnabled }
   });
 
