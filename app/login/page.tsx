@@ -22,6 +22,11 @@ const PLANS = {
 
 function LoginForm() {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
+
   const supabase = createClient();
   const searchParams = useSearchParams();
   const plano = (searchParams.get("plano") as "free" | "pro") || null;
@@ -30,6 +35,7 @@ function LoginForm() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setMessage(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -39,7 +45,48 @@ function LoginForm() {
     if (error) {
       console.error(error);
       setLoading(false);
-      alert("Erro ao tentar fazer login com o Google.");
+      setMessage({ type: "error", text: "Erro ao tentar fazer login com o Google." });
+    }
+  };
+
+  const handleEmailAction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+
+    if (mode === "login") {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setMessage({ type: "error", text: "E-mail ou senha incorretos." });
+        setLoading(false);
+      } else {
+        // Redirecionamento é tratado pelo Supabase/Next.js middleware ou callback
+        // Mas podemos forçar o redirecionamento aqui para o callback processar as regras de negócio
+        window.location.href = `/auth/callback${plano ? `?plano=${plano}` : ""}`;
+      }
+    } else {
+      const { error, data } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback${plano ? `?plano=${plano}` : ""}`,
+        }
+      });
+
+      if (error) {
+        setMessage({ type: "error", text: error.message });
+        setLoading(false);
+      } else if (data.session) {
+        // Logado imediatamente
+        window.location.href = `/auth/callback${plano ? `?plano=${plano}` : ""}`;
+      } else {
+        setMessage({ type: "success", text: "Verifique seu e-mail para confirmar o cadastro!" });
+        setLoading(false);
+      }
     }
   };
 
@@ -79,7 +126,7 @@ function LoginForm() {
           )}
 
           {/* Aviso se sem plano */}
-          {!plan && (
+          {!plan && mode === "signup" && (
             <div className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-3 text-center">
               <p className="text-xs text-amber-700 font-medium">
                 Sem plano selecionado.{" "}
@@ -90,18 +137,64 @@ function LoginForm() {
 
           {/* Card de Login */}
           <div className="bg-white py-8 px-6 shadow-sm rounded-2xl border border-gray-100">
-            {error === "auth-failed" && (
+            {error === "auth-failed" && !message && (
               <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-center text-sm text-red-600">
                 Ops! Não conseguimos fazer login. Tente novamente.
               </div>
             )}
 
-            <p className="text-center text-sm text-gray-500 font-medium mb-6">
-              Continue com sua conta Google para {plan ? "criar sua loja" : "acessar o sistema"}.
-            </p>
+            {message && (
+              <div className={`mb-4 p-3 rounded-xl text-center text-sm ${message.type === 'error' ? 'bg-red-50 border border-red-100 text-red-600' : 'bg-green-50 border border-green-100 text-green-600'}`}>
+                {message.text}
+              </div>
+            )}
+
+            <form onSubmit={handleEmailAction} className="space-y-4">
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">E-mail</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-vitrinia-purple focus:ring-2 focus:ring-vitrinia-purple/20 transition outline-none text-sm font-medium"
+                  placeholder="exemplo@email.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Senha</label>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-vitrinia-purple focus:ring-2 focus:ring-vitrinia-purple/20 transition outline-none text-sm font-medium"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 px-4 bg-vitrinia-purple hover:bg-vitrinia-purple/90 text-white rounded-xl shadow-lg shadow-vitrinia-purple/20 text-sm font-black transition disabled:opacity-50"
+              >
+                {loading ? "Processando..." : mode === "login" ? "Entrar" : "Criar Minha Conta"}
+              </button>
+            </form>
+
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-100"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase tracking-widest font-black">
+                <span className="bg-white px-4 text-gray-300 italic">ou</span>
+              </div>
+            </div>
 
             <button
               id="btn-google-login"
+              type="button"
               onClick={handleGoogleLogin}
               disabled={loading}
               className="w-full flex justify-center items-center gap-3 py-3.5 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition focus:outline-none disabled:opacity-50"
@@ -111,13 +204,23 @@ function LoginForm() {
                 src="https://www.svgrepo.com/show/475656/google-color.svg"
                 alt="Google"
               />
-              {loading ? "Conectando..." : "Continuar com o Google"}
+              Continuar com o Google
             </button>
 
-            <div className="mt-6 text-center">
-              <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 transition font-medium">
-                ← Voltar para a página inicial
-              </Link>
+            <div className="mt-8 text-center space-y-4">
+              <button
+                type="button"
+                onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                className="text-sm font-bold text-vitrinia-purple hover:underline"
+              >
+                {mode === "login" ? "Não tem uma conta? Cadastre-se" : "Já tem uma conta? Faça login"}
+              </button>
+              
+              <div>
+                <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 transition font-medium">
+                  ← Voltar para a página inicial
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -137,3 +240,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+

@@ -30,13 +30,42 @@ export async function GET(request: Request) {
     if (!error && data.user?.email) {
       let next = '/admin'
       const email = data.user.email
+      const name = data.user.user_metadata?.full_name || data.user.email.split('@')[0]
 
-      const dbUser = await prisma.user.findUnique({ where: { email } })
+      let dbUser = await prisma.user.findUnique({ where: { email } })
 
-      if (dbUser?.role === 'SUPERADMIN') {
+      // Regra de Superadmin Inviolável
+      const MASTER_ADMIN_EMAIL = "yagoguglia@gmail.com" // Pode ser movido para .env futuramente
+      
+      if (email === MASTER_ADMIN_EMAIL) {
+        if (!dbUser || dbUser.role !== 'SUPERADMIN') {
+          dbUser = await prisma.user.upsert({
+            where: { email },
+            update: { role: 'SUPERADMIN' },
+            create: {
+              email,
+              name: "Super Admin",
+              role: 'SUPERADMIN',
+              phone: "00000000000"
+            }
+          })
+        }
         next = '/superadmin'
-      } else if (!dbUser?.tenantId) {
-        // New user or user without a store → go to onboarding
+      } else if (!dbUser) {
+        // Novo usuário (E-mail/Senha ou Google) -> Criar no Prisma
+        // Nota: O tenantId será preenchido no onboarding
+        dbUser = await prisma.user.create({
+          data: {
+            email,
+            name,
+            phone: data.user.user_metadata?.phone || "",
+            role: 'CUSTOMER' // Role padrão inicial
+          }
+        })
+        next = `/onboarding${plano ? `?plano=${plano}` : ''}`
+      } else if (dbUser.role === 'SUPERADMIN') {
+        next = '/superadmin'
+      } else if (!dbUser.tenantId) {
         next = `/onboarding${plano ? `?plano=${plano}` : ''}`
       }
 

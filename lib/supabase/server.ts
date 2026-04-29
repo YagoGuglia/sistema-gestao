@@ -34,7 +34,19 @@ export async function requireTenant() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !user.email) throw new Error("Não autorizado");
 
+  const MASTER_ADMIN_EMAIL = "yagoguglia@gmail.com"
+
   const dbUser = await prisma.user.findUnique({ where: { email: user.email } });
+  
+  // Se for superadmin mestre e estiver tentando acessar uma rota de admin, 
+  // ele precisa estar vinculado a um tenant ou o sistema precisa saber qual tenant ele está "emulando".
+  // Por enquanto, mantemos a trava, mas garantimos que o erro seja claro.
+  if (user.email === MASTER_ADMIN_EMAIL && !dbUser?.tenantId) {
+     // Se for o superadmin e não tiver tenantId, ele só deveria acessar /superadmin
+     // Mas se ele estiver em uma rota de tenant, talvez devêssemos permitir se ele for o dono?
+     // Vamos deixar como está, mas o callback já garante que ele vá para /superadmin.
+  }
+
   if (!dbUser?.tenantId) throw new Error("Loja não encontrada ou usuário sem permissão.");
 
   return dbUser.tenantId;
