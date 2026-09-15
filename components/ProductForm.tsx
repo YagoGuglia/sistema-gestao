@@ -31,9 +31,12 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  costPrice: number;
   stock: number;
   minStock: number;
   isRawMaterial: boolean;
+  isService: boolean;
+  durationMin?: number | null;
   image?: string;
   ingredients?: {
     ingredientId: string;
@@ -64,10 +67,14 @@ export function ProductForm({
   const [error, setError] = useState<string | null>(null);
   
   // Estados do Formulário
-  const [isRawMaterial, setIsRawMaterial] = useState(false);
+  const [productType, setProductType] = useState<"PRODUCT" | "SERVICE" | "RAW_MATERIAL">("PRODUCT");
   const [imageUrl, setImageUrl] = useState("");
   const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  
+  // Real-time calculation state
+  const [price, setPrice] = useState(0);
+  const [costPrice, setCostPrice] = useState(0);
 
   // Sincronizar estado Dirty com o pai
   useEffect(() => {
@@ -76,8 +83,10 @@ export function ProductForm({
 
   // Resetar estados quando o produto mudar (Edição vs Novo)
   useEffect(() => {
-    setIsRawMaterial(initialData?.isRawMaterial || false);
+    setProductType(initialData?.isService ? "SERVICE" : initialData?.isRawMaterial ? "RAW_MATERIAL" : "PRODUCT");
     setImageUrl(initialData?.image || "");
+    setPrice(initialData?.price || 0);
+    setCostPrice(initialData?.costPrice || 0);
     setSelectedIngredients(
       initialData?.ingredients?.map(i => ({
         ingredientId: i.ingredientId,
@@ -95,13 +104,14 @@ export function ProductForm({
     setError(null);
     setSuccess(false);
     
-    formData.set("isRawMaterial", isRawMaterial.toString());
+    formData.set("isRawMaterial", (productType === "RAW_MATERIAL").toString());
+    formData.set("isService", (productType === "SERVICE").toString());
     formData.set("image", imageUrl);
     if (initialData?.id) formData.set("id", initialData.id);
 
     const result = await saveProduct(
        formData, 
-       isRawMaterial ? [] : selectedIngredients
+       productType === "RAW_MATERIAL" ? [] : selectedIngredients
     );
 
     if (result.error) {
@@ -177,42 +187,61 @@ export function ProductForm({
       {/* Sessão 1: Tipo */}
       <div className="space-y-4">
         <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Tipo de Cadastro</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <label className={cn(
             "relative flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition",
-            !isRawMaterial && "border-blue-600 bg-blue-50 ring-1 ring-blue-100"
+            productType === "PRODUCT" && "border-blue-600 bg-blue-50 ring-1 ring-blue-100"
           )}>
             <input 
-              type="radio" name="isRawMaterial" value="false" 
-              checked={!isRawMaterial} 
-              onChange={() => { setIsRawMaterial(false); setIsDirty(true); }}
+              type="radio" name="productType" value="PRODUCT" 
+              checked={productType === "PRODUCT"} 
+              onChange={() => { setProductType("PRODUCT"); setIsDirty(true); }}
               className="text-blue-600 focus:ring-blue-500" 
             />
             <div>
               <div className="font-bold text-gray-900 flex items-center gap-2">
-                <Package size={16} className={cn(!isRawMaterial ? "text-blue-600" : "text-gray-400")} />
-                Produto de Venda
+                <Package size={16} className={cn(productType === "PRODUCT" ? "text-blue-600" : "text-gray-400")} />
+                Produto Físico
               </div>
-              <p className="text-[10px] text-gray-500">Venda direta ao cliente.</p>
+              <p className="text-[10px] text-gray-500">Item de venda.</p>
             </div>
           </label>
 
           <label className={cn(
             "relative flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition",
-            isRawMaterial && "border-amber-600 bg-amber-50 ring-1 ring-amber-100"
+            productType === "SERVICE" && "border-vitrinia-purple bg-vitrinia-purple/10 ring-1 ring-vitrinia-purple/30"
           )}>
             <input 
-              type="radio" name="isRawMaterial" value="true" 
-              checked={isRawMaterial}
-              onChange={() => { setIsRawMaterial(true); setIsDirty(true); }}
+              type="radio" name="productType" value="SERVICE" 
+              checked={productType === "SERVICE"}
+              onChange={() => { setProductType("SERVICE"); setIsDirty(true); }}
+              className="text-vitrinia-purple focus:ring-vitrinia-purple" 
+            />
+            <div>
+              <div className="font-bold text-gray-900 flex items-center gap-2">
+                <Layers size={16} className={cn(productType === "SERVICE" ? "text-vitrinia-purple" : "text-gray-400")} />
+                Serviço
+              </div>
+              <p className="text-[10px] text-gray-500">Com agendamento.</p>
+            </div>
+          </label>
+
+          <label className={cn(
+            "relative flex items-center gap-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition",
+            productType === "RAW_MATERIAL" && "border-amber-600 bg-amber-50 ring-1 ring-amber-100"
+          )}>
+            <input 
+              type="radio" name="productType" value="RAW_MATERIAL" 
+              checked={productType === "RAW_MATERIAL"}
+              onChange={() => { setProductType("RAW_MATERIAL"); setIsDirty(true); }}
               className="text-amber-600 focus:ring-amber-500" 
             />
             <div>
               <div className="font-bold text-gray-900 flex items-center gap-2">
-                <Layers size={16} className={cn(isRawMaterial ? "text-amber-600" : "text-gray-400")} />
+                <Layers size={16} className={cn(productType === "RAW_MATERIAL" ? "text-amber-600" : "text-gray-400")} />
                 Matéria-prima
               </div>
-              <p className="text-[10px] text-gray-500">Insumo para fabricação.</p>
+              <p className="text-[10px] text-gray-500">Insumo interno.</p>
             </div>
           </label>
         </div>
@@ -236,18 +265,64 @@ export function ProductForm({
             className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
           />
         </div>
+
+        {productType === "SERVICE" && (
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Duração do Serviço (minutos)</label>
+            <input 
+              key={initialData?.id + "durationMin"}
+              type="number" name="durationMin" defaultValue={initialData?.durationMin || 30} 
+              className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+            />
+          </div>
+        )}
+
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Preço (R$)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Preço de Custo (R$)</label>
+          <input 
+            key={initialData?.id + "costPrice"}
+            type="text" 
+            name="costPrice" 
+            defaultValue={initialData?.costPrice !== undefined ? initialData.costPrice.toString().replace(".", decimalSeparator) : "0"}
+            placeholder={`0${decimalSeparator}00`}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value.replace(decimalSeparator === "," ? "." : ",", decimalSeparator === "," ? "," : ".").replace(",", ".")) || 0;
+              setCostPrice(val);
+              setIsDirty(true);
+            }}
+            className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Preço de Venda (R$)</label>
           <input 
             key={initialData?.id + "price"}
             type="text" 
             name="price" 
             defaultValue={initialData?.price !== undefined ? initialData.price.toString().replace(".", decimalSeparator) : "0"}
             placeholder={`0${decimalSeparator}00`}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value.replace(decimalSeparator === "," ? "." : ",", decimalSeparator === "," ? "," : ".").replace(",", ".")) || 0;
+              setPrice(val);
+              setIsDirty(true);
+            }}
             className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
         </div>
-        <div>
+
+        <div className="md:col-span-2 bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-blue-700 uppercase tracking-widest">Margem Bruta (Preço - Custo)</p>
+            <p className="text-sm text-blue-600 mt-1">Isso será usado no DRE e em relatórios financeiros.</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xl font-black text-blue-800">R$ {(price - costPrice).toFixed(2)}</p>
+            <p className="text-xs font-bold text-blue-600 mt-0.5">{price > 0 ? (((price - costPrice) / price) * 100).toFixed(1) : 0}% margem</p>
+          </div>
+        </div>
+
+        {productType !== "SERVICE" && (
+          <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Estoque Atual</label>
           <input 
             key={initialData?.id + "stock_display"}
@@ -278,10 +353,11 @@ export function ProductForm({
              Mínimo sugerido: {defaultMinStock} un.
           </p>
         </div>
+        )}
       </div>
 
       {/* Sessão 3: Ficha Técnica */}
-      {!isRawMaterial && (
+      {productType === "PRODUCT" && (
         <div className="pt-4 border-t border-gray-100">
           <IngredientsManager 
             availableInsumos={availableInsumos}

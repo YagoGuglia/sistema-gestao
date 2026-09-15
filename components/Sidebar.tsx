@@ -13,7 +13,9 @@ import {
   X,
   PlusCircle,
   Building2,
-  Store
+  Wallet,
+  Star,
+  UsersRound
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -23,7 +25,10 @@ const menuItems = [
   { name: "Estoque", href: "/admin/produtos", icon: Package },
   { name: "Pedidos", href: "/admin/pedidos", icon: ShoppingCart },
   { name: "Agenda", href: "/admin/agenda", icon: Calendar },
+  { name: "Financeiro", href: "/admin/financeiro", icon: Wallet },
+  { name: "Equipe", href: "/admin/equipe", icon: UsersRound },
   { name: "Clientes", href: "/admin/clientes", icon: Users },
+  { name: "Avaliações", href: "/admin/avaliacoes", icon: Star },
   { name: "Empresa", href: "/admin/empresa", icon: Building2 },
   { name: "Configurações", href: "/admin/config", icon: Settings },
 ];
@@ -37,7 +42,7 @@ export function Sidebar() {
       {/* Botão Mobile */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 right-4 z-50 p-2 bg-blue-600 text-white rounded-md shadow-lg"
+        className="lg:hidden fixed top-4 right-4 z-50 p-2 bg-vitrinia-purple text-white rounded-md shadow-lg"
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -66,9 +71,9 @@ export function Sidebar() {
             <p className="text-xs text-gray-500 font-medium mt-1">Gestão para Pequenos Negócios</p>
           </div>
 
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 space-y-2 overflow-y-auto pr-2 pb-4">
             {menuItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/admin');
               return (
                 <Link
                   key={item.name}
@@ -77,11 +82,11 @@ export function Sidebar() {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
                     isActive 
-                      ? "bg-blue-50 text-blue-600 shadow-sm" 
+                      ? "bg-vitrinia-purple/10 text-vitrinia-purple shadow-sm" 
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   )}
                 >
-                  <item.icon size={20} className={cn(isActive ? "text-blue-600" : "text-gray-400")} />
+                  <item.icon size={20} className={cn(isActive ? "text-vitrinia-purple" : "text-gray-400")} />
                   {item.name}
                 </Link>
               );
@@ -91,7 +96,7 @@ export function Sidebar() {
           <div className="mt-auto pt-6 border-t border-gray-100">
             <Link 
               href="/admin/produtos/novo"
-              className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-bold shadow-md hover:bg-blue-700 transition active:scale-95"
+              className="flex items-center justify-center gap-2 w-full bg-vitrinia-purple text-white py-3 px-4 rounded-lg font-bold shadow-md hover:bg-vitrinia-purple/90 transition active:scale-95"
             >
               <PlusCircle size={20} />
               Novo Produto

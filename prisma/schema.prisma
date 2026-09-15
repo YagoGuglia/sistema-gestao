@@ -1,4 +1,4 @@
-// schema.prisma
+// schema.prisma - Vitrinia Core Model v2.2 (SaaS Direto)
 
 generator client {
   provider = "prisma-client-js"
@@ -25,12 +25,15 @@ model Tenant {
   createdAt DateTime @default(now())
 
   users        User[]
+  staff        Staff[]
   products     Product[]
   orders       Order[]
+  expenses     Expense[]
   settings     GlobalSettings?
   stockLogs    StockLog[]
   appointments Appointment[]
-  Coupon       Coupon[]
+  coupons      Coupon[]
+  reviews      Review[]
 }
 
 model User {
@@ -56,11 +59,27 @@ model User {
 
   orders       Order[]
   appointments Appointment[]
+  reviews      Review[]
 
   createdAt DateTime @default(now())
 
   // Um cliente pode usar o mesmo telefone na mesma loja, mas não dois clientes com o mesmo telefone na mesma loja.
   @@unique([tenantId, phone])
+}
+
+model Staff {
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name           String
+  phone          String?
+  roleTitle      String  @default("Atendente") // "Prestador de Serviço", "Vendedor", "Entregador", "Ajudante", "Gerente"
+  commissionRate Float   @default(0)           // Porcentagem de comissão (ex: 10.0 para 10%)
+  isActive       Boolean @default(true)
+
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
 }
 
 model Product {
@@ -70,11 +89,14 @@ model Product {
 
   name          String
   description   String?
-  price         Float
+  price         Float   // Preço de Venda
+  costPrice     Float   @default(0) // Preço de Custo
   stock         Float   @default(0)
   minStock      Float   @default(10)
   image         String?
   isRawMaterial Boolean @default(false)
+  isService     Boolean @default(false) // True = Serviço (aparece na vitrine de serviços)
+  durationMin   Int?    @default(30)    // Duração do serviço em minutos
 
   ingredients ProductIngredient[] @relation("ProductToIngredient")
   usedIn      ProductIngredient[] @relation("IngredientInProduct")
@@ -116,14 +138,54 @@ model GlobalSettings {
   tenantId String @unique
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  companyName              String  @default("Minha Loja")
-  companyLogoUrl           String?
-  defaultMinStock          Float   @default(10)
-  decimalSeparator         String  @default(".")
-  defaultDeliveryFee       Float   @default(0)
-  defaultSchedulingEnabled Boolean @default(false)
+  // Identidade & Marca
+  companyName    String  @default("Minha Loja")
+  companyLogoUrl String?
+  bannerUrl      String?
+  primaryColor   String  @default("#7C3AED") // Cor de destaque da vitrine
+  businessType   String  @default("BOTH")    // "PRODUCTS", "SERVICES", "BOTH"
+
+  // Legacy (mantidos para compatibilidade)
+  defaultMinStock    Float  @default(10)
+  decimalSeparator   String @default(".")
+  defaultDeliveryFee Float  @default(0)
+
+  // Horários de Funcionamento
+  openingTime String? @default("08:00")
+  closingTime String? @default("18:00")
+  workDays    String? @default("MON,TUE,WED,THU,FRI,SAT")
+
+  // Regras de Agendamento & Cancelamento
+  defaultSchedulingEnabled Boolean @default(true)
+  depositType              String  @default("OFF") // "OFF", "PARTIAL", "FULL"
+  depositPercentage        Float   @default(0)     // ex: 20 para 20%
+  cancellationHoursLimit   Int     @default(2)     // Prazo limite para cancelamento (horas)
+
+  // Módulo de Comissões
+  enableCommissions Boolean @default(false)
+
+  // Integrações de Gateway do Lojista (Credenciais Próprias)
+  gatewayProvider     String? // "MERCADOPAGO", "ASAAS", "EFI"
+  gatewayAccessToken  String? // Token/Key da conta do lojista
+  pixKey              String?
+  whatsappNumber      String?
+  autoWhatsappEnabled Boolean @default(true)
 
   updatedAt DateTime @default(now())
+}
+
+model Expense {
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  description String
+  amount      Float
+  category    String   // "ALUGUEL", "ENERGIA", "INSUMOS", "SALARIO", "OUTROS"
+  dueDate     DateTime
+  paidAt      DateTime?
+
+  createdAt DateTime @default(now())
 }
 
 model Order {
@@ -134,14 +196,18 @@ model Order {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  totalAmount Float
-  status      String  @default("PENDING") // PENDING, COMPLETED, CANCELLED
-  isManual    Boolean @default(false)
+  totalAmount   Float
+  depositAmount Float   @default(0)
+  status        String  @default("PENDING") // PENDING, PAID, REFUNDED, COMPLETED, CANCELLED
+  isManual      Boolean @default(false)
 
-  orderType   String    @default("RETIRADA") // RETIRADA, DELIVERY
-  scheduledAt DateTime?
-  deliveryFee Float     @default(0)
-  observation String?
+  orderType     String    @default("RETIRADA") // RETIRADA, DELIVERY
+  paymentMethod String    @default("PIX")      // PIX, CREDIT_CARD, DEBIT_CARD, MONEY
+  pixPaymentId  String?   // ID da transação no Gateway do Lojista para acionar o refund
+  pixQrCode     String?
+  scheduledAt   DateTime?
+  deliveryFee   Float     @default(0)
+  observation   String?
 
   items       OrderItem[]
   appointment Appointment?
@@ -159,6 +225,7 @@ model OrderItem {
 
   quantity    Int
   price       Float
+  costPrice   Float    @default(0) // Custo no momento da venda para relatórios
   observation String?
   createdAt   DateTime @default(now())
 }
@@ -171,12 +238,32 @@ model Appointment {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
+  staffId String?
+  staff   Staff?  @relation(fields: [staffId], references: [id])
+
   orderId String? @unique
   order   Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  startTime DateTime
-  endTime   DateTime
-  status    String   @default("SCHEDULED")
+  startTime  DateTime
+  endTime    DateTime
+  status     String   @default("SCHEDULED") // SCHEDULED, CONFIRMED, COMPLETED, CANCELED
+  notes      String?
+  commission Float    @default(0) // Valor de comissão calculado para este atendimento
+}
+
+model Review {
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  rating      Int     // 1 a 5
+  comment     String?
+  isPublished Boolean @default(true)
+
+  createdAt DateTime @default(now())
 }
 
 model Coupon {

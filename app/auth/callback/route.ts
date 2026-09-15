@@ -27,6 +27,10 @@ export async function GET(request: Request) {
 
     const { error, data } = await supabase.auth.exchangeCodeForSession(code)
 
+    if (error) {
+      console.error('Erro no exchangeCodeForSession:', error)
+    }
+
     if (!error && data.user?.email) {
       let next = '/admin'
       const email = data.user.email

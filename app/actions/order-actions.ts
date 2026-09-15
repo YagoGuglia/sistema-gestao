@@ -14,6 +14,9 @@ interface OrderItemInput {
 export async function createManualOrder(data: {
   userId: string;
   orderType: string; // "RETIRADA" or "DELIVERY"
+  paymentMethod?: string;
+  depositAmount?: number;
+  pixPaymentId?: string;
   status?: string;   // "RECEIVED", "PREPARING", "DONE"
   scheduledAt?: Date | null;
   deliveryFee: number;
@@ -26,12 +29,22 @@ export async function createManualOrder(data: {
     const totalAmount = totalItemsAmount + data.deliveryFee;
 
     const order = await prisma.$transaction(async (tx) => {
+      // Buscar custos atuais dos produtos para "travar" no momento da venda (snapshot)
+      const products = await tx.product.findMany({
+        where: { id: { in: data.items.map(i => i.productId) } },
+        select: { id: true, costPrice: true }
+      });
+      const costMap = new Map(products.map(p => [p.id, p.costPrice]));
+
       // 1. Criar o pedido
       const newOrder = await tx.order.create({
         data: {
           tenantId,
           userId: data.userId,
           totalAmount,
+          depositAmount: data.depositAmount || 0,
+          paymentMethod: data.paymentMethod || "PIX",
+          pixPaymentId: data.pixPaymentId || null,
           status: data.status || "RECEIVED",
           isManual: true,
           orderType: data.orderType,
@@ -43,6 +56,7 @@ export async function createManualOrder(data: {
               productId: item.productId,
               quantity: item.quantity,
               price: item.price,
+              costPrice: costMap.get(item.productId) || 0,
               observation: item.observation || null
             }))
           }

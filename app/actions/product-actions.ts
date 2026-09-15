@@ -15,7 +15,9 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const isRawMaterial = formData.get("isRawMaterial") === "true";
+  const isService = formData.get("isService") === "true";
   const image = formData.get("image") as string;
+  const durationMin = parseInt(formData.get("durationMin") as string) || 30;
 
   // Buscar configurações para o separador decimal
   const settings = await prisma.globalSettings.findUnique({ where: { id: "default" } });
@@ -31,6 +33,9 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
 
   const rawPrice = parseNumeric(formData.get("price") as string);
   const price = Math.round(rawPrice * 100) / 100; // Garantir precisão de 2 casas
+  
+  const rawCostPrice = parseNumeric(formData.get("costPrice") as string);
+  const costPrice = Math.round(rawCostPrice * 100) / 100;
   
   const minStock = parseNumeric(formData.get("minStock") as string);
   const stock = parseNumeric(formData.get("stock") as string);
@@ -48,8 +53,11 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
             name, 
             description, 
             price, 
+            costPrice,
             minStock, 
             isRawMaterial, 
+            isService,
+            durationMin: isService ? durationMin : null,
             image 
             // stock: stock - REMOVIDO para evitar bugs de campo disabled
           }
@@ -79,10 +87,13 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
           name, 
           description, 
           price, 
+          costPrice,
           stock, 
           minStock: isNaN(minStock) ? (settings?.defaultMinStock || 10) : minStock,
           image,
           isRawMaterial,
+          isService,
+          durationMin: isService ? durationMin : null,
           ingredients: !isRawMaterial && ingredients.length > 0 ? {
             create: ingredients.map(ing => ({
               ingredientId: ing.ingredientId,

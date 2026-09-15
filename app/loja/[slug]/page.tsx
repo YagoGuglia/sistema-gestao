@@ -30,6 +30,11 @@ export default async function StorefrontPage({ params }: { params: Promise<{ slu
       products: {
         where: { isRawMaterial: false },
         orderBy: { name: 'asc' }
+      },
+      reviews: {
+        where: { isPublished: true },
+        include: { user: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' }
       }
     }
   });
@@ -37,14 +42,26 @@ export default async function StorefrontPage({ params }: { params: Promise<{ slu
   if (!tenant) {
     notFound();
   }
+  
+  const primaryColor = tenant.settings?.primaryColor || "#7C3AED";
+  const storeName = tenant.settings?.companyName || tenant.name;
 
   return (
-    <main className="min-h-screen bg-vitrinia-bg pb-24 font-sans">
+    <main 
+      className="min-h-screen bg-gray-50 pb-24 font-sans selection:bg-brand/20"
+      style={{ "--brand-color": primaryColor } as React.CSSProperties}
+    >
       <StoreHeader 
-        storeName={tenant.settings?.companyName || tenant.name} 
+        storeName={storeName} 
         logoUrl={tenant.settings?.companyLogoUrl}
+        bannerUrl={tenant.settings?.bannerUrl}
       />
-      <StorefrontClient products={tenant.products} />
+      <StorefrontClient 
+        products={tenant.products} 
+        settings={tenant.settings} 
+        tenantId={tenant.id}
+        reviews={tenant.reviews}
+      />
     </main>
   );
 }
