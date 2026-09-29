@@ -1,9 +1,10 @@
 "use client";
 
 import { ProductCard } from "./ProductCard";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, MessageCircle } from "lucide-react";
 import { useCart } from "./CartContext";
 import { useParams, useRouter } from "next/navigation";
+import { createWhatsAppLink } from "@/lib/whatsapp";
 
 interface Product {
   id: string;
@@ -129,6 +130,22 @@ export function StorefrontClient({
             ))}
           </div>
         </section>
+      )}
+
+      {/* Botão Flutuante de WhatsApp / Acompanhamento de Pedido */}
+      {settings?.whatsappNumber && (
+        <a
+          href={createWhatsAppLink(settings.whatsappNumber, `Olá! Gostaria de tirar uma dúvida ou acompanhar meu pedido.`)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`fixed z-40 bg-emerald-500 hover:bg-emerald-600 text-white p-3.5 rounded-full shadow-2xl shadow-emerald-500/40 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 ${
+            cartCount > 0 ? "bottom-24 right-4" : "bottom-6 right-4"
+          }`}
+          title="Falar no WhatsApp / Acompanhar Pedido"
+        >
+          <MessageCircle className="w-6 h-6" />
+          <span className="hidden sm:inline text-xs font-bold pr-1">Acompanhar Pedido</span>
+        </a>
       )}
 
       {/* Sticky Cart Bottom Bar */}

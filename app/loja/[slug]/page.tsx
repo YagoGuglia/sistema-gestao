@@ -55,6 +55,8 @@ export default async function StorefrontPage({ params }: { params: Promise<{ slu
         storeName={storeName} 
         logoUrl={tenant.settings?.companyLogoUrl}
         bannerUrl={tenant.settings?.bannerUrl}
+        isOpen={(tenant.settings as any)?.isStoreOpen ?? true}
+        whatsappNumber={tenant.settings?.whatsappNumber}
       />
       <StorefrontClient 
         products={tenant.products} 

@@ -27,10 +27,16 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Atualiza o token/sessão
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Atualiza o token/sessão com proteção contra falha de rede/DNS e timeout de 1.5s
+  let user = null
+  try {
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1500))
+    const authPromise = supabase.auth.getUser()
+    const result: any = await Promise.race([authPromise, timeoutPromise])
+    user = result?.data?.user || null
+  } catch (error) {
+    // Falha silenciosa de conexão ou timeout
+  }
 
   // Se o usuário tentar acessar a área de administração ou onboarding e não estiver logado
   const isProtected = request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/onboarding')

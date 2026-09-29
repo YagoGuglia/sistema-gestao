@@ -16,14 +16,11 @@ export default async function EmpresaPage() {
 
   if (!tenant) return <div>Loja não encontrada.</div>;
 
-  const vitrineUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://seusite.com"}/loja/${tenant.slug}`;
-
   return (
     <EmpresaClient
       tenant={{ id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan, status: tenant.status }}
       settings={{ companyName: settings?.companyName || tenant.name, companyLogoUrl: settings?.companyLogoUrl || null }}
       coupons={coupons}
-      vitrineUrl={vitrineUrl}
     />
   );
 }

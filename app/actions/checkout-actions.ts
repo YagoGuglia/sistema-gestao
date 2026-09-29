@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { calculateOrderDuration, validateAppointmentSlot } from "@/lib/scheduling";
 
 interface CheckoutData {
   slug: string;
@@ -20,12 +21,31 @@ export async function processCheckout(data: CheckoutData) {
   try {
     const tenant = await prisma.tenant.findUnique({
       where: { slug: data.slug },
-      include: { settings: true }
+      include: { settings: true },
     });
 
     if (!tenant) throw new Error("Loja não encontrada");
 
     const tenantId = tenant.id;
+
+    // Se o cliente escolheu um horário, valida antecipadamente antes de iniciar a transação
+    let scheduleValidation: any = null;
+    let orderDurationMin = 30;
+
+    if (data.scheduledAt && tenant.settings?.defaultSchedulingEnabled) {
+      const scheduledDate = new Date(data.scheduledAt);
+      orderDurationMin = await calculateOrderDuration(tenantId, data.items);
+
+      scheduleValidation = await validateAppointmentSlot({
+        tenantId,
+        scheduledAt: scheduledDate,
+        durationMin: orderDurationMin,
+      });
+
+      if (!scheduleValidation.valid) {
+        return { error: scheduleValidation.error };
+      }
+    }
 
     // Upsert Customer
     const user = await prisma.user.upsert({
@@ -43,12 +63,12 @@ export async function processCheckout(data: CheckoutData) {
         address: data.customer.address,
         neighborhood: data.customer.neighborhood,
         city: data.customer.city,
-        role: "CUSTOMER"
-      }
+        role: "CUSTOMER",
+      },
     });
 
-    const totalItemsAmount = data.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    const deliveryFee = data.orderType === "DELIVERY" ? (tenant.settings?.defaultDeliveryFee || 0) : 0;
+    const totalItemsAmount = data.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const deliveryFee = data.orderType === "DELIVERY" ? tenant.settings?.defaultDeliveryFee || 0 : 0;
     const totalAmount = totalItemsAmount + deliveryFee;
 
     const newOrder = await prisma.$transaction(async (tx) => {
@@ -62,7 +82,7 @@ export async function processCheckout(data: CheckoutData) {
           orderType: data.orderType,
           scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
           deliveryFee,
-        }
+        },
       });
 
       for (const item of data.items) {
@@ -72,14 +92,14 @@ export async function processCheckout(data: CheckoutData) {
             orderId: order.id,
             productId: item.id,
             quantity: item.quantity,
-            price: item.price
-          }
+            price: item.price,
+          },
         });
 
         // Update Stock and create Log
         await tx.product.update({
           where: { id: item.id },
-          data: { stock: { decrement: item.quantity } }
+          data: { stock: { decrement: item.quantity } },
         });
 
         await tx.stockLog.create({
@@ -88,26 +108,30 @@ export async function processCheckout(data: CheckoutData) {
             productId: item.id,
             quantityChange: -Math.abs(item.quantity),
             type: "SALE",
-            justification: `Venda via Vitrine #${order.id}`
-          }
+            justification: `Venda via Vitrine #${order.id}`,
+          },
         });
       }
 
-      // Se houver agendamento, cria o appointment
-      if (data.scheduledAt && tenant.settings?.defaultSchedulingEnabled) {
-        const startTime = new Date(data.scheduledAt);
-        // Exemplo: Reserva um bloco de 30 minutos
-        const endTime = new Date(startTime.getTime() + 30 * 60000); 
+      // Se houver agendamento validado, cria o appointment
+      if (data.scheduledAt && scheduleValidation && scheduleValidation.valid) {
+        // Calcula valor da comissão se aplicável
+        let commissionValue = 0;
+        if (tenant.settings?.enableCommissions && scheduleValidation.commissionRate > 0) {
+          commissionValue = Math.round((totalItemsAmount * (scheduleValidation.commissionRate / 100)) * 100) / 100;
+        }
 
         await tx.appointment.create({
           data: {
             tenantId,
             userId: user.id,
             orderId: order.id,
-            startTime,
-            endTime,
-            status: "SCHEDULED"
-          }
+            staffId: scheduleValidation.staffId,
+            startTime: scheduleValidation.startTime,
+            endTime: scheduleValidation.endTime,
+            status: "SCHEDULED", // Aguardando aceite do lojista
+            commission: commissionValue,
+          },
         });
       }
 
@@ -120,3 +144,4 @@ export async function processCheckout(data: CheckoutData) {
     return { error: error.message || "Erro ao processar o pedido" };
   }
 }
+

@@ -86,10 +86,28 @@ export async function createManualOrder(data: {
         // Depende de como a logística da empresa foi planejada
       }
 
+      // 3. Se houver data agendada, cria o agendamento já confirmado
+      if (data.scheduledAt) {
+        const startTime = new Date(data.scheduledAt);
+        const endTime = new Date(startTime.getTime() + 30 * 60000);
+
+        await tx.appointment.create({
+          data: {
+            tenantId,
+            userId: data.userId,
+            orderId: newOrder.id,
+            startTime,
+            endTime,
+            status: "CONFIRMED",
+          },
+        });
+      }
+
       return newOrder;
     });
 
     revalidatePath("/admin/pedidos");
+    revalidatePath("/admin/agenda");
     revalidatePath("/admin/produtos");
     revalidatePath("/");
     

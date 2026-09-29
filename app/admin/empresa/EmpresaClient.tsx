@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Store, Copy, Check, Tag, Plus, Trash2, ToggleLeft, ToggleRight, ExternalLink } from "lucide-react";
+import { Store, Tag, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { createCoupon, toggleCoupon, deleteCoupon } from "@/app/actions/coupon-actions";
+import { StoreShareModal } from "@/components/admin/StoreShareModal";
 
 interface Coupon {
   id: string;
@@ -17,21 +18,13 @@ interface Props {
   tenant: { id: string; name: string; slug: string; plan: string; status: string };
   settings: { companyName: string; companyLogoUrl: string | null };
   coupons: Coupon[];
-  vitrineUrl: string;
 }
 
-export function EmpresaClient({ tenant, settings, coupons: initialCoupons, vitrineUrl }: Props) {
+export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Props) {
   const [coupons, setCoupons] = useState(initialCoupons);
-  const [copied, setCopied] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState("");
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(vitrineUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleCreateCoupon = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -64,7 +57,7 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons, vitri
 
       {/* Info da Loja */}
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-vitrinia-purple/10 rounded-2xl flex items-center justify-center">
             {settings.companyLogoUrl
               ? <img src={settings.companyLogoUrl} className="w-full h-full object-cover rounded-2xl" alt="Logo" />
@@ -77,23 +70,15 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons, vitri
             </span>
           </div>
         </div>
+      </div>
 
-        <div>
-          <p className="text-sm font-semibold text-gray-700 mb-2">Link da sua Vitrine Pública</p>
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl p-3">
-            <p className="text-sm text-gray-600 flex-1 truncate">{vitrineUrl}</p>
-            <button
-              onClick={copyLink}
-              className="p-1.5 rounded-lg hover:bg-gray-200 transition text-gray-500"
-              title="Copiar link"
-            >
-              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-            </button>
-            <a href={vitrineUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-gray-200 transition text-gray-500" title="Abrir Vitrine">
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </div>
-        </div>
+      {/* Divulgação, Link e QR Code da Loja */}
+      <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <StoreShareModal
+          slug={tenant.slug}
+          storeName={settings.companyName}
+          logoUrl={settings.companyLogoUrl}
+        />
       </div>
 
       {/* Cupons da Loja */}

@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const plano = searchParams.get('plano') || ''
+  const nextParam = searchParams.get('next')
 
   if (code) {
     const cookieStore = await cookies()
@@ -32,6 +33,21 @@ export async function GET(request: Request) {
     }
 
     if (!error && data.user?.email) {
+      // Detecta se o fluxo é de recuperação de senha (recovery)
+      // O Supabase PKCE envia type=recovery no parâmetro 'next' ou no session
+      const isRecoveryFlow = nextParam === '/auth/redefinir-senha'
+
+      if (isRecoveryFlow) {
+        // Redireciona para a página de criação de nova senha, sem verificar onboarding/admin
+        const forwardedHost = request.headers.get('x-forwarded-host')
+        const isLocalhost = process.env.NODE_ENV === 'development'
+        const targetUrl = '/auth/redefinir-senha'
+        
+        if (isLocalhost) return NextResponse.redirect(`${origin}${targetUrl}`)
+        if (forwardedHost) return NextResponse.redirect(`https://${forwardedHost}${targetUrl}`)
+        return NextResponse.redirect(`${origin}${targetUrl}`)
+      }
+
       let next = '/admin'
       const email = data.user.email
       const name = data.user.user_metadata?.full_name || data.user.email.split('@')[0]

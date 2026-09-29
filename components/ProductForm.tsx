@@ -322,6 +322,7 @@ export function ProductForm({
         </div>
 
         {productType !== "SERVICE" && (
+          <>
           <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Estoque Atual</label>
           <input 
@@ -353,6 +354,7 @@ export function ProductForm({
              Mínimo sugerido: {defaultMinStock} un.
           </p>
         </div>
+        </>
         )}
       </div>
 

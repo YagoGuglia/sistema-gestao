@@ -1,7 +1,16 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Rotas públicas (vitrine, checkout do cliente, recibo, login, landing page) não chamam Supabase
+  const isProtected = pathname.startsWith('/admin') || pathname.startsWith('/onboarding') || pathname.startsWith('/superadmin')
+
+  if (!isProtected) {
+    return NextResponse.next()
+  }
+
   return await updateSession(request)
 }
 

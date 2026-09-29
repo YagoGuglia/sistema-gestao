@@ -1,4 +1,6 @@
 import { getGlobalSettings, updateGlobalSettings } from "@/app/actions/settings-actions";
+import { OperatingHoursConfig } from "@/components/admin/OperatingHoursConfig";
+import { SchedulingConfig } from "@/components/admin/SchedulingConfig";
 import {
   Settings,
   Save,
@@ -128,41 +130,16 @@ export default async function ConfigPage() {
           <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-transparent">
             <h2 className="text-sm font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
               <Clock size={16} />
-              Horários de Funcionamento
+              Horários de Funcionamento & Turnos
             </h2>
           </div>
-          <div className="p-6 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">Abertura</label>
-                <input
-                  type="time"
-                  name="openingTime"
-                  defaultValue={settings.openingTime || "08:00"}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none transition font-bold text-lg"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">Fechamento</label>
-                <input
-                  type="time"
-                  name="closingTime"
-                  defaultValue={settings.closingTime || "18:00"}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none transition font-bold text-lg"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-gray-700">Dias de Funcionamento</label>
-              <input
-                type="text"
-                name="workDays"
-                defaultValue={settings.workDays || "MON,TUE,WED,THU,FRI,SAT"}
-                placeholder="MON,TUE,WED,THU,FRI,SAT"
-                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-300 focus:border-amber-400 outline-none transition text-sm font-mono"
-              />
-              <p className="text-xs text-gray-400 italic">Use: MON, TUE, WED, THU, FRI, SAT, SUN separados por vírgula.</p>
-            </div>
+          <div className="p-6">
+            <OperatingHoursConfig
+              initialWorkDays={settings.workDays}
+              initialOperatingHours={(settings as any).operatingHours}
+              initialOpeningTime={settings.openingTime}
+              initialClosingTime={settings.closingTime}
+            />
           </div>
         </section>
 
@@ -174,80 +151,19 @@ export default async function ConfigPage() {
               Agendamento & Cancelamento
             </h2>
           </div>
-          <div className="p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="block text-sm font-bold text-gray-700">Agendamento Ativo</label>
-                <p className="text-xs text-gray-400 mt-1 italic">Permite que clientes agendem horários na vitrine.</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="defaultSchedulingEnabled"
-                  defaultChecked={settings.defaultSchedulingEnabled}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500" />
-              </label>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-gray-700">Garantia de Horário (Sinal Antecipado)</label>
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { value: "OFF", label: "Desativado", desc: "Pagar no local" },
-                  { value: "PARTIAL", label: "Sinal Parcial", desc: "Ex: 20%, 30% ou 50%" },
-                  { value: "FULL", label: "100% Antecipado", desc: "Pagamento integral" },
-                ].map((opt) => (
-                  <label
-                    key={opt.value}
-                    className={`flex-1 min-w-[130px] p-4 border-2 rounded-2xl cursor-pointer transition-all ${
-                      settings.depositType === opt.value
-                        ? "border-emerald-500 bg-emerald-50"
-                        : "border-gray-100 hover:border-gray-200"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-gray-700">{opt.label}</span>
-                      <input
-                        type="radio"
-                        name="depositType"
-                        value={opt.value}
-                        defaultChecked={settings.depositType === opt.value}
-                        className="w-4 h-4 text-emerald-500"
-                      />
-                    </div>
-                    <p className="text-[10px] text-gray-400">{opt.desc}</p>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">Porcentagem do Sinal (%)</label>
-                <input
-                  type="number"
-                  name="depositPercentage"
-                  defaultValue={settings.depositPercentage}
-                  min="0"
-                  max="100"
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-300 outline-none transition font-bold text-lg"
-                />
-                <p className="text-xs text-gray-400 italic">Aplicável apenas quando o tipo for &quot;Sinal Parcial&quot;.</p>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">Prazo para Cancelamento (horas)</label>
-                <input
-                  type="number"
-                  name="cancellationHoursLimit"
-                  defaultValue={settings.cancellationHoursLimit}
-                  min="0"
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-300 outline-none transition font-bold text-lg"
-                />
-                <p className="text-xs text-gray-400 italic">Cancelamentos dentro deste prazo antes do horário terão estorno. Fora do prazo, o sinal é retido.</p>
-              </div>
-            </div>
+          <div className="p-6">
+            <SchedulingConfig
+              initialSchedulingEnabled={settings.defaultSchedulingEnabled}
+              initialDepositType={settings.depositType}
+              initialDepositPercentage={settings.depositPercentage}
+              initialCancellationHoursLimit={settings.cancellationHoursLimit}
+              initialSchedulingDays={(settings as any).schedulingDays}
+              initialSchedulingStartTime={(settings as any).schedulingStartTime}
+              initialSchedulingEndTime={(settings as any).schedulingEndTime}
+              initialSchedulingPeriod={(settings as any).schedulingPeriod}
+              initialSlotIntervalMin={(settings as any).slotIntervalMin ?? 30}
+              initialDeliverySchedulingEnabled={(settings as any).deliverySchedulingEnabled ?? true}
+            />
           </div>
         </section>
 

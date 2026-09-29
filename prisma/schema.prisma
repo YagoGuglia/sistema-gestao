@@ -151,15 +151,24 @@ model GlobalSettings {
   defaultDeliveryFee Float  @default(0)
 
   // Horários de Funcionamento
-  openingTime String? @default("08:00")
-  closingTime String? @default("18:00")
-  workDays    String? @default("MON,TUE,WED,THU,FRI,SAT")
+  openingTime    String? @default("08:00")
+  closingTime    String? @default("18:00")
+  workDays       String? @default("DOM,SEG,TER,QUA,QUI,SEX,SAB")
+  operatingHours String? @default("[{\"start\":\"08:00\",\"end\":\"18:00\"}]")
+  isStoreOpen    Boolean @default(true)
+  isRegisterOpen Boolean @default(false)
 
   // Regras de Agendamento & Cancelamento
   defaultSchedulingEnabled Boolean @default(true)
+  deliverySchedulingEnabled Boolean @default(true) // Agendamento para entrega de produtos
+  slotIntervalMin          Int     @default(30)    // Intervalo entre horários na grade (minutos: 15, 30, 45, 60)
   depositType              String  @default("OFF") // "OFF", "PARTIAL", "FULL"
   depositPercentage        Float   @default(0)     // ex: 20 para 20%
   cancellationHoursLimit   Int     @default(2)     // Prazo limite para cancelamento (horas)
+  schedulingDays           String? @default("SEG,TER,QUA,QUI,SEX,SAB")
+  schedulingStartTime      String? @default("08:00")
+  schedulingEndTime        String? @default("18:00")
+  schedulingPeriod         String? @default("ALWAYS") // "1_WEEK", "2_WEEKS", "3_WEEKS", "MONTH", "ALWAYS"
 
   // Módulo de Comissões
   enableCommissions Boolean @default(false)

@@ -9,6 +9,10 @@ import {
   ArrowLeftRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getGlobalSettings } from "@/app/actions/settings-actions";
+import { StoreStatusWidget } from "@/components/admin/StoreStatusWidget";
+import { StoreShareModal } from "@/components/admin/StoreShareModal";
+import { requireTenant } from "@/lib/supabase/server";
 
 interface Product {
   id: string;
@@ -24,8 +28,13 @@ interface Order {
 }
 
 export default async function Dashboard() {
-  const products = (await prisma.product.findMany()) as Product[];
-  const orders = (await prisma.order.findMany()) as Order[];
+  const tenantId = await requireTenant();
+  const [products, orders, settings, tenant] = await Promise.all([
+    prisma.product.findMany({ where: { tenantId } }) as Promise<Product[]>,
+    prisma.order.findMany({ where: { tenantId } }) as Promise<Order[]>,
+    getGlobalSettings(),
+    prisma.tenant.findUnique({ where: { id: tenantId } }),
+  ]);
   
   const totalProducts = products.length;
   const lowStockProducts = products.filter((p: Product) => p.stock < p.minStock);
@@ -37,19 +46,36 @@ export default async function Dashboard() {
   ).length;
 
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-8 pb-20">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Dashboard de Gestão</h1>
            <p className="text-gray-500 font-medium">Resumo do seu negócio em tempo real.</p>
         </div>
         
-        <div className="flex items-center bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
-           <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold transition shadow-md">Hoje</button>
-           <button className="px-4 py-2 text-gray-400 hover:text-gray-600 text-xs font-bold transition">7 Dias</button>
-           <button className="px-4 py-2 text-gray-400 hover:text-gray-600 text-xs font-bold transition">Mês</button>
+        <div className="flex flex-wrap items-center gap-3">
+          {tenant && (
+            <StoreShareModal
+              asModal
+              slug={tenant.slug}
+              storeName={settings.companyName || tenant.name}
+              logoUrl={settings.companyLogoUrl}
+            />
+          )}
+
+          <div className="flex items-center bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
+             <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold transition shadow-md">Hoje</button>
+             <button className="px-4 py-2 text-gray-400 hover:text-gray-600 text-xs font-bold transition">7 Dias</button>
+             <button className="px-4 py-2 text-gray-400 hover:text-gray-600 text-xs font-bold transition">Mês</button>
+          </div>
         </div>
       </header>
+
+      {/* CONTROLE OPERACIONAL DA LOJA E DO CAIXA */}
+      <StoreStatusWidget 
+        initialStoreOpen={(settings as any).isStoreOpen ?? true}
+        initialRegisterOpen={(settings as any).isRegisterOpen ?? false}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard 
