@@ -59,6 +59,17 @@ export function IngredientsManager({
       };
     });
   });
+
+  // Keep string state for inputs so typing "0," or "0." doesn't reset to 0
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    initialIngredients.forEach(item => {
+      const q = item.displayQuantity ?? item.quantity;
+      map[item.ingredientId] = q ? q.toString().replace(".", decimalSeparator) : "1";
+    });
+    return map;
+  });
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isListExpanded, setIsListExpanded] = useState(true);
 
@@ -93,6 +104,11 @@ export function IngredientsManager({
     
     if (isSelected) {
       newList = selected.filter(s => s.ingredientId !== insumo.id);
+      setRawInputs(prev => {
+        const copy = { ...prev };
+        delete copy[insumo.id];
+        return copy;
+      });
     } else {
       const baseUnit = insumo.unit || "UN";
       newList = [...selected, { 
@@ -103,10 +119,21 @@ export function IngredientsManager({
         displayUnit: baseUnit,
         unit: baseUnit
       }];
+      setRawInputs(prev => ({ ...prev, [insumo.id]: "1" }));
     }
     
     setSelected(newList);
     notifyChanges(newList);
+  };
+
+  const handleRawInputChange = (id: string, rawVal: string, currentDisplayUnit: string) => {
+    setRawInputs(prev => ({ ...prev, [id]: rawVal }));
+
+    const normalizedStr = rawVal.replace(",", ".");
+    const parsedVal = parseFloat(normalizedStr);
+    const validQty = isNaN(parsedVal) ? 0 : parsedVal;
+
+    updateItem(id, validQty, currentDisplayUnit);
   };
 
   const updateItem = (id: string, newDisplayQty: number, newDisplayUnit?: string) => {
@@ -249,6 +276,7 @@ export function IngredientsManager({
                  const itemCost = (insumoData?.costPrice || 0) * item.quantity;
                  
                  const showConversionHint = currentDisplayUnit !== baseUnit;
+                 const inputVal = rawInputs[item.ingredientId] ?? currentDisplayQty.toString().replace(".", decimalSeparator);
 
                  return (
                    <div key={item.ingredientId} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-gray-50/50 transition">
@@ -270,18 +298,19 @@ export function IngredientsManager({
                          <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-xl border border-transparent focus-within:border-blue-200 focus-within:bg-white transition-all">
                             <input 
                               type="text"
-                              value={currentDisplayQty.toString().replace(".", decimalSeparator)}
-                              onChange={(e) => {
-                                 const valStr = e.target.value.replace(decimalSeparator === "," ? "." : ",", decimalSeparator === "," ? "," : ".").replace(",", ".");
-                                 const parsed = parseFloat(valStr) || 0;
-                                 updateItem(item.ingredientId, parsed, currentDisplayUnit);
-                              }}
+                              value={inputVal}
+                              onChange={(e) => handleRawInputChange(item.ingredientId, e.target.value, currentDisplayUnit)}
                               className="w-16 bg-transparent text-center font-bold text-blue-600 outline-none text-xs"
                             />
                             
                             <select
                               value={currentDisplayUnit}
-                              onChange={(e) => updateItem(item.ingredientId, currentDisplayQty, e.target.value)}
+                              onChange={(e) => {
+                                const newUnit = e.target.value;
+                                const currentRaw = rawInputs[item.ingredientId] || currentDisplayQty.toString();
+                                const parsed = parseFloat(currentRaw.replace(",", ".")) || 0;
+                                updateItem(item.ingredientId, parsed, newUnit);
+                              }}
                               className="bg-transparent text-[10px] font-black text-gray-600 uppercase outline-none cursor-pointer border-l border-gray-200 pl-1"
                             >
                               {compatibleUnits.map(u => (
@@ -308,5 +337,6 @@ export function IngredientsManager({
     </div>
   );
 }
+
 
 

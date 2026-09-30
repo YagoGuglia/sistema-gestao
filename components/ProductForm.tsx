@@ -96,9 +96,11 @@ export function ProductForm({
       initialData?.ingredients?.map(i => ({
         ingredientId: i.ingredientId,
         name: i.ingredient.name,
-        quantity: i.quantity
+        quantity: i.quantity,
+        unit: (i.ingredient as any).unit || "UN"
       })) || []
     );
+
     setIsDirty(false);
     setSuccess(false);
     setError(null);

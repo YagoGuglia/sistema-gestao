@@ -11,9 +11,10 @@ export default async function ProdutosPage() {
     // Busca apenas insumos (matérias-primas)
     const availableInsumos = await prisma.product.findMany({
         where: { isRawMaterial: true },
-        select: { id: true, name: true, stock: true },
+        select: { id: true, name: true, stock: true, unit: true, costPrice: true },
         orderBy: { name: 'asc' }
     });
+
 
     const settings = await getGlobalSettings();
 
