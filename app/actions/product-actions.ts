@@ -141,9 +141,14 @@ export async function getProduct(id: string) {
     where: { id },
     include: {
       ingredients: {
-        include: { ingredient: true }
+        include: {
+          ingredient: {
+            select: { id: true, name: true, unit: true, costPrice: true, stock: true }
+          }
+        }
       }
     }
   });
 }
+
 

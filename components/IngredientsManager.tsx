@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import { 
   Plus, 
   Trash2, 
@@ -71,7 +72,36 @@ export function IngredientsManager({
   });
 
   const [searchTerm, setSearchTerm] = useState("");
+
   const [isListExpanded, setIsListExpanded] = useState(true);
+
+  // Sync state when initialIngredients or availableInsumos changes (e.g. on opening Edit)
+  useEffect(() => {
+    if (initialIngredients.length > 0) {
+      const mapped = initialIngredients.map(item => {
+        const insumo = availableInsumos.find(i => i.id === item.ingredientId);
+        const baseUnit = insumo?.unit || item.unit || "UN";
+        return {
+          ...item,
+          displayQuantity: item.displayQuantity ?? item.quantity,
+          displayUnit: item.displayUnit ?? baseUnit,
+          unit: baseUnit
+        };
+      });
+      setSelected(mapped);
+
+      const map: Record<string, string> = {};
+      mapped.forEach(item => {
+        const q = item.displayQuantity ?? item.quantity;
+        map[item.ingredientId] = q !== undefined ? q.toString().replace(".", decimalSeparator) : "1";
+      });
+      setRawInputs(map);
+    } else {
+      setSelected([]);
+      setRawInputs({});
+    }
+  }, [initialIngredients, availableInsumos, decimalSeparator]);
+
 
   // Helper para obter os dados do insumo original
   const getInsumoData = (id: string) => availableInsumos.find(i => i.id === id);

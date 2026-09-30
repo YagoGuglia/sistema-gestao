@@ -1,6 +1,6 @@
 // lib/unit-conversion.ts
 
-export type UnitType = "UN" | "KG" | "G" | "L" | "ML" | "M" | "CM";
+export type UnitType = "UN" | "FATIA" | "PORCAO" | "KG" | "G" | "L" | "ML" | "M" | "CM";
 
 export interface UnitOption {
   code: UnitType;
@@ -10,14 +10,17 @@ export interface UnitOption {
 }
 
 export const UNITS: Record<UnitType, UnitOption> = {
-  UN: { code: "UN", label: "UN (Unidade)", category: "count", factorToBase: 1 },
-  KG: { code: "KG", label: "KG (Quilograma)", category: "mass", factorToBase: 1 },
-  G:  { code: "G",  label: "G (Grama)", category: "mass", factorToBase: 0.001 },
-  L:  { code: "L",  label: "L (Litro)", category: "volume", factorToBase: 1 },
-  ML: { code: "ML", label: "ML (Mililitro)", category: "volume", factorToBase: 0.001 },
-  M:  { code: "M",  label: "M (Metro)", category: "length", factorToBase: 1 },
-  CM: { code: "CM", label: "CM (Centímetro)", category: "length", factorToBase: 0.01 },
+  UN:     { code: "UN",     label: "UN (Unidade)",           category: "count",  factorToBase: 1 },
+  FATIA:  { code: "FATIA",  label: "FATIA / Rodela (0.1 UN)",category: "count",  factorToBase: 0.1 },
+  PORCAO: { code: "PORCAO", label: "PORÇÃO (0.2 UN)",        category: "count",  factorToBase: 0.2 },
+  KG:     { code: "KG",     label: "KG (Quilograma)",        category: "mass",   factorToBase: 1 },
+  G:      { code: "G",      label: "G (Grama)",              category: "mass",   factorToBase: 0.001 },
+  L:      { code: "L",      label: "L (Litro)",              category: "volume", factorToBase: 1 },
+  ML:     { code: "ML",     label: "ML (Mililitro)",         category: "volume", factorToBase: 0.001 },
+  M:      { code: "M",      label: "M (Metro)",              category: "length", factorToBase: 1 },
+  CM:     { code: "CM",     label: "CM (Centímetro)",        category: "length", factorToBase: 0.01 },
 };
+
 
 /**
  * Returns available display units for a given base unit.

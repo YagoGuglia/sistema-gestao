@@ -19,8 +19,9 @@ import { deleteProduct, getProduct } from "@/app/actions/product-actions";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
+import { ProductionModal } from "./admin/ProductionModal";
 import { StockScanModal } from "./admin/StockScanModal";
-import { Sparkles } from "lucide-react";
+import { Wrench, Sparkles } from "lucide-react";
 
 interface ProductListItem {
   id: string;
@@ -31,6 +32,7 @@ interface ProductListItem {
   minStock: number;
   unit?: string;
   isRawMaterial: boolean;
+  ingredients?: any[];
 }
 
 interface ProductListClientProps {
@@ -50,6 +52,7 @@ export function ProductListClient({
   const [searchTerm, setSearchTerm] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [productionProduct, setProductionProduct] = useState<any | null>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   
@@ -76,6 +79,13 @@ export function ProductListClient({
     const product = await getProduct(id);
     setEditingProduct(product);
     setIsDrawerOpen(true);
+    setLoading(false);
+  };
+
+  const handleOpenProduction = async (id: string) => {
+    setLoading(true);
+    const product = await getProduct(id);
+    setProductionProduct(product);
     setLoading(false);
   };
 
@@ -127,10 +137,18 @@ export function ProductListClient({
         onSuccess={() => window.location.reload()}
       />
 
+      {/* Modal de Produção / Montagem de Lote */}
+      <ProductionModal 
+        isOpen={!!productionProduct}
+        onClose={() => setProductionProduct(null)}
+        product={productionProduct}
+        onSuccess={() => window.location.reload()}
+      />
+
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Estoque e Produtos</h1>
-          <p className="text-sm text-gray-500">Gerencie seu catálogo de vendas, matérias-primas e unidades de medida.</p>
+          <p className="text-sm text-gray-500">Gerencie seu catálogo de vendas, matérias-primas e montagem de lote.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -183,6 +201,7 @@ export function ProductListClient({
             icon={<Package className="text-blue-600" size={20} />} 
             onEdit={handleEdit} 
             onDelete={handleDelete}
+            onProduce={handleOpenProduction}
             badgeColor="bg-blue-100 text-blue-700"
           />
         )}
@@ -227,7 +246,7 @@ export function ProductListClient({
   );
 }
 
-function ProductSection({ title, items, icon, onEdit, onDelete, badgeColor }: any) {
+function ProductSection({ title, items, icon, onEdit, onDelete, onProduce, badgeColor }: any) {
   return (
     <section>
       <div className="flex items-center gap-2 mb-4">
@@ -303,6 +322,17 @@ function ProductSection({ title, items, icon, onEdit, onDelete, badgeColor }: an
                   <td className="px-6 py-4 text-sm font-bold text-gray-900">R$ {p.price.toFixed(2)}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {!p.isRawMaterial && onProduce && (
+                        <button
+                          onClick={() => onProduce(p.id)}
+                          className="px-2.5 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-xs font-bold transition flex items-center gap-1 mr-1"
+                          title="Montar / Produzir Lote deste produto"
+                        >
+                          <Wrench size={14} />
+                          Produzir
+                        </button>
+                      )}
+
                       <Link
                         href={`/admin/produtos/ajuste/${p.id}`}
                         className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition"
@@ -333,4 +363,5 @@ function ProductSection({ title, items, icon, onEdit, onDelete, badgeColor }: an
     </section>
   );
 }
+
 

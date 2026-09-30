@@ -93,11 +93,104 @@ export async function batchAdjustStock(adjustments: BatchAdjustmentItem[]) {
     });
 
     revalidatePath("/admin/produtos");
-    revalidatePath("/");
-    return { success: true, count: adjustments.length };
-  } catch (err) {
-    console.error("Erro no batchAdjustStock:", err);
-    return { error: "Erro ao registrar as entradas de estoque em lote." };
+    return { success: true };
+  } catch (err: any) {
+    console.error("Erro no ajuste em lote:", err);
+    return { error: "Erro ao processar lote de estoque." };
   }
 }
+
+export async function produceProductBatch(
+  productId: string, 
+  quantityToProduce: number, 
+  justification?: string
+) {
+  if (!productId || quantityToProduce <= 0) {
+    return { error: "Informe um produto válido e a quantidade a ser produzida." };
+  }
+
+  try {
+    const tenantId = await requireTenant();
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        ingredients: {
+          include: {
+            ingredient: {
+              select: { id: true, name: true, stock: true, unit: true, costPrice: true }
+            }
+          }
+        }
+      }
+    });
+
+    if (!product) {
+      return { error: "Produto não encontrado." };
+    }
+
+    if (!product.ingredients || product.ingredients.length === 0) {
+      return { error: `O produto "${product.name}" não possui Ficha Técnica (Receita) vinculada para montagem.` };
+    }
+
+    // Check raw material stock availability
+    for (const item of product.ingredients) {
+      const requiredQty = item.quantity * quantityToProduce;
+      const rawInsumo = item.ingredient;
+
+      if (rawInsumo.stock < requiredQty) {
+        return { 
+          error: `Estoque insuficiente do insumo "${rawInsumo.name}". Necessário: ${requiredQty} ${rawInsumo.unit || 'UN'}, Disponível: ${rawInsumo.stock} ${rawInsumo.unit || 'UN'}.` 
+        };
+      }
+    }
+
+    // Execute Production Transaction
+    await prisma.$transaction(async (tx) => {
+      // 1. Deduct raw materials
+      for (const item of product.ingredients) {
+        const requiredQty = item.quantity * quantityToProduce;
+
+        await tx.product.update({
+          where: { id: item.ingredientId },
+          data: { stock: { decrement: requiredQty } }
+        });
+
+        await tx.stockLog.create({
+          data: {
+            tenantId,
+            productId: item.ingredientId,
+            quantityChange: -Math.abs(requiredQty),
+            type: "PRODUCTION_CONSUMPTION",
+            justification: justification || `Consumo para montagem de ${quantityToProduce} un de "${product.name}"`
+          }
+        });
+      }
+
+      // 2. Increment finished product stock
+      await tx.product.update({
+        where: { id: productId },
+        data: { stock: { increment: quantityToProduce } }
+      });
+
+      await tx.stockLog.create({
+        data: {
+          tenantId,
+          productId,
+          quantityChange: quantityToProduce,
+          type: "PRODUCTION_ENTRY",
+          justification: justification || `Entrada por montagem de lote de ${quantityToProduce} un`
+        }
+      });
+    });
+
+    revalidatePath("/admin/produtos");
+    revalidatePath("/");
+    return { success: true, productName: product.name, producedQty: quantityToProduce };
+  } catch (err: any) {
+    console.error("Erro na produção:", err);
+    return { error: "Erro ao registrar a produção do produto." };
+  }
+}
+
 
