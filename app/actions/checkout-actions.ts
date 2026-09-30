@@ -111,7 +111,34 @@ export async function processCheckout(data: CheckoutData) {
             justification: `Venda via Vitrine #${order.id}`,
           },
         });
+
+        // Deduct Raw Material Ingredients (BOM)
+        const productWithRecipe = await tx.product.findUnique({
+          where: { id: item.id },
+          include: { ingredients: true }
+        });
+
+        if (productWithRecipe?.ingredients && productWithRecipe.ingredients.length > 0) {
+          for (const ing of productWithRecipe.ingredients) {
+            const rawDeduction = ing.quantity * item.quantity;
+            await tx.product.update({
+              where: { id: ing.ingredientId },
+              data: { stock: { decrement: rawDeduction } }
+            });
+
+            await tx.stockLog.create({
+              data: {
+                tenantId,
+                productId: ing.ingredientId,
+                quantityChange: -Math.abs(rawDeduction),
+                type: "BOM_CONSUMPTION",
+                justification: `Consumo de insumo na receita de "${productWithRecipe.name}" (Pedido #${order.id})`
+              }
+            });
+          }
+        }
       }
+
 
       // Se houver agendamento validado, cria o appointment
       if (data.scheduledAt && scheduleValidation && scheduleValidation.valid) {

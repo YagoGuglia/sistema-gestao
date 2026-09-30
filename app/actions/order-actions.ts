@@ -63,7 +63,7 @@ export async function createManualOrder(data: {
         }
       });
 
-      // 2. Dar baixa no estoque e criar Logs
+      // 2. Dar baixa no estoque do produto e das matérias-primas (Ficha Técnica)
       for (const item of data.items) {
         // Reduz estoque do produto final
         await tx.product.update({
@@ -82,9 +82,33 @@ export async function createManualOrder(data: {
           }
         });
 
-        // TODO: Reduzir estoques de matérias primas baseados nas receitas se necessário
-        // Depende de como a logística da empresa foi planejada
+        // Reduzir estoques de matérias-primas baseados nas receitas (Ficha Técnica)
+        const productWithRecipe = await tx.product.findUnique({
+          where: { id: item.productId },
+          include: { ingredients: true }
+        });
+
+        if (productWithRecipe?.ingredients && productWithRecipe.ingredients.length > 0) {
+          for (const ing of productWithRecipe.ingredients) {
+            const rawDeduction = ing.quantity * item.quantity;
+            await tx.product.update({
+              where: { id: ing.ingredientId },
+              data: { stock: { decrement: rawDeduction } }
+            });
+
+            await tx.stockLog.create({
+              data: {
+                tenantId,
+                productId: ing.ingredientId,
+                quantityChange: -Math.abs(rawDeduction),
+                type: "BOM_CONSUMPTION",
+                justification: `Consumo de insumo na receita de "${productWithRecipe.name}" (Pedido #${newOrder.id})`
+              }
+            });
+          }
+        }
       }
+
 
       // 3. Se houver data agendada, cria o agendamento já confirmado
       if (data.scheduledAt) {

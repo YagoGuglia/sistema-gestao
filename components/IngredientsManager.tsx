@@ -12,6 +12,8 @@ import {
   ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getCompatibleUnits, convertUnit, UnitType } from "@/lib/unit-conversion";
+
 
 interface Ingredient {
   id: string;
@@ -24,7 +26,9 @@ interface Ingredient {
 interface SelectedIngredient {
   ingredientId: string;
   name: string;
-  quantity: number;
+  quantity: number; // Stored in raw material's base unit
+  displayQuantity?: number;
+  displayUnit?: string;
   unit?: string;
 }
 
@@ -43,7 +47,18 @@ export function IngredientsManager({
   onRecipeCostChange,
   decimalSeparator = "."
 }: IngredientsManagerProps) {
-  const [selected, setSelected] = useState<SelectedIngredient[]>(initialIngredients);
+  const [selected, setSelected] = useState<SelectedIngredient[]>(() => {
+    return initialIngredients.map(item => {
+      const insumo = availableInsumos.find(i => i.id === item.ingredientId);
+      const baseUnit = insumo?.unit || "UN";
+      return {
+        ...item,
+        displayQuantity: item.displayQuantity ?? item.quantity,
+        displayUnit: item.displayUnit ?? baseUnit,
+        unit: baseUnit
+      };
+    });
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [isListExpanded, setIsListExpanded] = useState(true);
 
@@ -79,11 +94,14 @@ export function IngredientsManager({
     if (isSelected) {
       newList = selected.filter(s => s.ingredientId !== insumo.id);
     } else {
+      const baseUnit = insumo.unit || "UN";
       newList = [...selected, { 
         ingredientId: insumo.id, 
         name: insumo.name, 
         quantity: 1,
-        unit: insumo.unit || "UN"
+        displayQuantity: 1,
+        displayUnit: baseUnit,
+        unit: baseUnit
       }];
     }
     
@@ -91,10 +109,26 @@ export function IngredientsManager({
     notifyChanges(newList);
   };
 
-  const updateQuantity = (id: string, qty: number) => {
-    const newList = selected.map(s => 
-      s.ingredientId === id ? { ...s, quantity: qty } : s
-    );
+  const updateItem = (id: string, newDisplayQty: number, newDisplayUnit?: string) => {
+    const newList = selected.map(s => {
+      if (s.ingredientId !== id) return s;
+
+      const insumo = getInsumoData(id);
+      const baseUnit = insumo?.unit || "UN";
+      const chosenUnit = newDisplayUnit || s.displayUnit || baseUnit;
+      
+      // Calculate quantity converted to raw material base unit
+      const baseQty = convertUnit(newDisplayQty, chosenUnit, baseUnit);
+
+      return {
+        ...s,
+        quantity: baseQty,
+        displayQuantity: newDisplayQty,
+        displayUnit: chosenUnit,
+        unit: baseUnit
+      };
+    });
+
     setSelected(newList);
     notifyChanges(newList);
   };
@@ -202,35 +236,58 @@ export function IngredientsManager({
            {selected.length === 0 ? (
              <div className="p-12 text-center text-gray-300">
                 <Layers size={32} className="mx-auto mb-2 opacity-20" />
-                <p className="text-xs italic font-medium">Selecione os insumos acima para definir as quantidades.</p>
+                <p className="text-xs italic font-medium">Selecione os insumos acima para definir as quantidades e frações.</p>
              </div>
            ) : (
              <div className="divide-y divide-gray-50">
                {selected.map(item => {
                  const insumoData = getInsumoData(item.ingredientId);
-                 const unit = insumoData?.unit || item.unit || "UN";
+                 const baseUnit = insumoData?.unit || "UN";
+                 const compatibleUnits = getCompatibleUnits(baseUnit);
+                 const currentDisplayUnit = item.displayUnit || baseUnit;
+                 const currentDisplayQty = item.displayQuantity ?? item.quantity;
                  const itemCost = (insumoData?.costPrice || 0) * item.quantity;
+                 
+                 const showConversionHint = currentDisplayUnit !== baseUnit;
+
                  return (
-                   <div key={item.ingredientId} className="p-4 flex items-center justify-between group hover:bg-gray-50/50 transition">
-                      <div className="flex-1">
-                         <p className="text-xs font-bold text-gray-800">{item.name}</p>
-                         <p className="text-[10px] text-emerald-600 font-medium mt-0.5">
-                           Subtotal: R$ {itemCost.toFixed(2)}
-                         </p>
+                   <div key={item.ingredientId} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-gray-50/50 transition">
+                      <div className="flex-1 min-w-0">
+                         <p className="text-xs font-bold text-gray-800 truncate">{item.name}</p>
+                         <div className="flex items-center gap-2 mt-0.5">
+                           <p className="text-[10px] text-emerald-600 font-bold">
+                             Subtotal: R$ {itemCost.toFixed(2)}
+                           </p>
+                           {showConversionHint && (
+                             <span className="text-[9px] text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">
+                               = {item.quantity} {baseUnit} no estoque
+                             </span>
+                           )}
+                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-4">
-                         <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-xl border border-transparent focus-within:border-blue-200 focus-within:bg-white transition-all">
+                      <div className="flex items-center gap-3">
+                         <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-xl border border-transparent focus-within:border-blue-200 focus-within:bg-white transition-all">
                             <input 
                               type="text"
-                              value={item.quantity.toString().replace(".", decimalSeparator)}
+                              value={currentDisplayQty.toString().replace(".", decimalSeparator)}
                               onChange={(e) => {
-                                 const val = e.target.value.replace(decimalSeparator, ".");
-                                 updateQuantity(item.ingredientId, parseFloat(val) || 0);
+                                 const valStr = e.target.value.replace(decimalSeparator === "," ? "." : ",", decimalSeparator === "," ? "," : ".").replace(",", ".");
+                                 const parsed = parseFloat(valStr) || 0;
+                                 updateItem(item.ingredientId, parsed, currentDisplayUnit);
                               }}
-                              className="w-14 bg-transparent text-center font-bold text-blue-600 outline-none text-xs"
+                              className="w-16 bg-transparent text-center font-bold text-blue-600 outline-none text-xs"
                             />
-                            <span className="text-[10px] text-gray-500 font-black uppercase">{unit}</span>
+                            
+                            <select
+                              value={currentDisplayUnit}
+                              onChange={(e) => updateItem(item.ingredientId, currentDisplayQty, e.target.value)}
+                              className="bg-transparent text-[10px] font-black text-gray-600 uppercase outline-none cursor-pointer border-l border-gray-200 pl-1"
+                            >
+                              {compatibleUnits.map(u => (
+                                <option key={u} value={u}>{u}</option>
+                              ))}
+                            </select>
                          </div>
 
                          <button 
@@ -251,4 +308,5 @@ export function IngredientsManager({
     </div>
   );
 }
+
 
