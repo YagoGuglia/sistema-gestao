@@ -93,6 +93,7 @@ model Product {
   costPrice     Float   @default(0) // Preço de Custo
   stock         Float   @default(0)
   minStock      Float   @default(10)
+  unit          String  @default("UN") // UN, KG, G, L, ML, M, CM
   image         String?
   isRawMaterial Boolean @default(false)
   isService     Boolean @default(false) // True = Serviço (aparece na vitrine de serviços)

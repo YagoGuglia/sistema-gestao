@@ -14,6 +14,7 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
   const id = formData.get("id") as string | null;
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
+  const unit = (formData.get("unit") as string) || "UN";
   const isRawMaterial = formData.get("isRawMaterial") === "true";
   const isService = formData.get("isService") === "true";
   const image = formData.get("image") as string;
@@ -52,6 +53,7 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
           data: { 
             name, 
             description, 
+            unit,
             price, 
             costPrice,
             minStock, 
@@ -59,7 +61,7 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
             isService,
             durationMin: isService ? durationMin : null,
             image 
-            // stock: stock - REMOVIDO para evitar bugs de campo disabled
+            // stock: stock - REMOVIDO para evitar bugs de campo disabled em edição
           }
         });
 
@@ -86,6 +88,7 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
           tenantId,
           name, 
           description, 
+          unit,
           price, 
           costPrice,
           stock, 
@@ -128,7 +131,7 @@ export async function getInsumos() {
   const tenantId = await requireTenant();
   return await prisma.product.findMany({
     where: { isRawMaterial: true, tenantId },
-    select: { id: true, name: true, stock: true },
+    select: { id: true, name: true, stock: true, unit: true, costPrice: true },
     orderBy: { name: 'asc' }
   });
 }
@@ -143,3 +146,4 @@ export async function getProduct(id: string) {
     }
   });
 }
+

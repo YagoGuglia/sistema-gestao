@@ -6,7 +6,7 @@ import { Plus, Minus, Send, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-export function StockAdjustmentForm({ productId }: { productId: string }) {
+export function StockAdjustmentForm({ productId, unit = "UN" }: { productId: string; unit?: string }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +14,14 @@ export function StockAdjustmentForm({ productId }: { productId: string }) {
   const [quantity, setQuantity] = useState(1);
   const [justification, setJustification] = useState("");
   const router = useRouter();
+
+  const quickJustifications = [
+    "Compra de Mercadoria / NFe",
+    "Produção / Consumo de Receita",
+    "Perda / Avaria / Validade",
+    "Ajuste de Inventário",
+    "Devolução de Cliente"
+  ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,18 +91,43 @@ export function StockAdjustmentForm({ productId }: { productId: string }) {
 
       <div className="space-y-6">
         <div>
-           <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest px-1">Quantidade a Ajustar</label>
-           <input 
-              type="number" 
-              step="0.001"
-              value={quantity}
-              onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
-              className="w-full text-center text-3xl font-black p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
-           />
+           <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest px-1">
+             Quantidade a Ajustar ({unit})
+           </label>
+           <div className="relative flex items-center">
+             <input 
+                type="number" 
+                step="0.001"
+                value={quantity}
+                onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+                className="w-full text-center text-3xl font-black p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
+             />
+             <span className="absolute right-6 text-sm font-black text-gray-400 uppercase">{unit}</span>
+           </div>
         </div>
 
         <div>
            <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest px-1">Justificativa da Alteração</label>
+           
+           {/* Sugestões Rápidas */}
+           <div className="flex flex-wrap gap-2 mb-3">
+             {quickJustifications.map((q) => (
+               <button
+                 key={q}
+                 type="button"
+                 onClick={() => setJustification(q)}
+                 className={cn(
+                   "text-[10px] font-bold px-3 py-1.5 rounded-xl border transition",
+                   justification === q
+                     ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                     : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                 )}
+               >
+                 {q}
+               </button>
+             ))}
+           </div>
+
            <textarea 
               required
               rows={3}
@@ -133,3 +166,4 @@ export function StockAdjustmentForm({ productId }: { productId: string }) {
     </form>
   );
 }
+

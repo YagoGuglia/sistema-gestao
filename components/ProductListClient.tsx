@@ -19,6 +19,9 @@ import { deleteProduct, getProduct } from "@/app/actions/product-actions";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
+import { StockScanModal } from "./admin/StockScanModal";
+import { Sparkles } from "lucide-react";
+
 interface ProductListItem {
   id: string;
   name: string;
@@ -26,6 +29,7 @@ interface ProductListItem {
   price: number;
   stock: number;
   minStock: number;
+  unit?: string;
   isRawMaterial: boolean;
 }
 
@@ -45,6 +49,7 @@ export function ProductListClient({
   const [products, setProducts] = useState(initialProducts);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   
@@ -109,18 +114,42 @@ export function ProductListClient({
         cancelLabel="Voltar ao formulário"
       />
 
+      {/* Modal de Scan Inteligente OCR */}
+      <StockScanModal
+        isOpen={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
+        products={products.map(p => ({
+          id: p.id,
+          name: p.name,
+          unit: p.unit,
+          isRawMaterial: p.isRawMaterial
+        }))}
+        onSuccess={() => window.location.reload()}
+      />
+
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Estoque e Produtos</h1>
-          <p className="text-sm text-gray-500">Gerencie seu catálogo de vendas e matérias-primas.</p>
+          <p className="text-sm text-gray-500">Gerencie seu catálogo de vendas, matérias-primas e unidades de medida.</p>
         </div>
-        <button 
-          onClick={() => { setEditingProduct(null); setIsDrawerOpen(true); setIsFormDirty(false); }}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95"
-        >
-          <Plus size={20} />
-          Novo Item
-        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsScanModalOpen(true)}
+            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95 text-sm"
+          >
+            <Sparkles size={18} className="text-yellow-300" />
+            Entrada por Scan / Nota
+          </button>
+
+          <button 
+            onClick={() => { setEditingProduct(null); setIsDrawerOpen(true); setIsFormDirty(false); }}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95 text-sm"
+          >
+            <Plus size={20} />
+            Novo Item
+          </button>
+        </div>
       </header>
 
       {/* Busca e Filtros */}
@@ -225,6 +254,7 @@ function ProductSection({ title, items, icon, onEdit, onDelete, badgeColor }: an
               <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-xs">Sem resultados para esta categoria.</td></tr>
             ) : items.map((p: any) => {
               const isLowStock = p.stock < p.minStock;
+              const unit = p.unit || "UN";
               return (
                 <tr key={p.id} className="hover:bg-gray-50/50 transition border-b border-gray-50">
                   <td className="px-6 py-4">
@@ -259,13 +289,13 @@ function ProductSection({ title, items, icon, onEdit, onDelete, badgeColor }: an
                           isLowStock ? "bg-red-500 animate-pulse" : "bg-green-500"
                         )} title={isLowStock ? "Estoque Baixo" : "Estoque OK"} />
                         <span className={cn("text-sm font-bold", isLowStock ? "text-red-600" : "text-gray-700")}>
-                          {p.stock}
+                          {p.stock} <span className="text-xs text-gray-400 font-bold uppercase">{unit}</span>
                         </span>
                       </div>
                       {isLowStock && (
                         <div className="flex items-center gap-1 mt-1">
                           <AlertTriangle size={10} className="text-red-500" />
-                          <span className="text-[10px] text-red-500 font-medium">Alert: Min {p.minStock}</span>
+                          <span className="text-[10px] text-red-500 font-medium">Min {p.minStock} {unit}</span>
                         </div>
                       )}
                     </div>
@@ -303,3 +333,4 @@ function ProductSection({ title, items, icon, onEdit, onDelete, badgeColor }: an
     </section>
   );
 }
+

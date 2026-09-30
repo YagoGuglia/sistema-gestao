@@ -34,6 +34,7 @@ interface Product {
   costPrice: number;
   stock: number;
   minStock: number;
+  unit?: string;
   isRawMaterial: boolean;
   isService: boolean;
   durationMin?: number | null;
@@ -68,6 +69,7 @@ export function ProductForm({
   
   // Estados do Formulário
   const [productType, setProductType] = useState<"PRODUCT" | "SERVICE" | "RAW_MATERIAL">("PRODUCT");
+  const [unit, setUnit] = useState<string>("UN");
   const [imageUrl, setImageUrl] = useState("");
   const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>([]);
   const [isDirty, setIsDirty] = useState(false);
@@ -75,6 +77,7 @@ export function ProductForm({
   // Real-time calculation state
   const [price, setPrice] = useState(0);
   const [costPrice, setCostPrice] = useState(0);
+  const [initialStock, setInitialStock] = useState(0);
 
   // Sincronizar estado Dirty com o pai
   useEffect(() => {
@@ -84,9 +87,11 @@ export function ProductForm({
   // Resetar estados quando o produto mudar (Edição vs Novo)
   useEffect(() => {
     setProductType(initialData?.isService ? "SERVICE" : initialData?.isRawMaterial ? "RAW_MATERIAL" : "PRODUCT");
+    setUnit(initialData?.unit || "UN");
     setImageUrl(initialData?.image || "");
     setPrice(initialData?.price || 0);
     setCostPrice(initialData?.costPrice || 0);
+    setInitialStock(initialData?.stock || 0);
     setSelectedIngredients(
       initialData?.ingredients?.map(i => ({
         ingredientId: i.ingredientId,
@@ -107,6 +112,7 @@ export function ProductForm({
     formData.set("isRawMaterial", (productType === "RAW_MATERIAL").toString());
     formData.set("isService", (productType === "SERVICE").toString());
     formData.set("image", imageUrl);
+    formData.set("unit", unit);
     if (initialData?.id) formData.set("id", initialData.id);
 
     const result = await saveProduct(
@@ -253,10 +259,29 @@ export function ProductForm({
           <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Item</label>
           <input 
             key={initialData?.id + "name"}
-            type="text" name="name" defaultValue={initialData?.name} required placeholder="Ex: Bolo, Farinha..."
+            type="text" name="name" defaultValue={initialData?.name} required placeholder="Ex: Bolo de Cenoura, Farinha de Trigo..."
             className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
         </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Unidade de Medida</label>
+          <select
+            name="unit"
+            value={unit}
+            onChange={(e) => { setUnit(e.target.value); setIsDirty(true); }}
+            className="w-full p-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-sm font-bold text-gray-800 cursor-pointer"
+          >
+            <option value="UN">UN — Unidade (pct, cx, un)</option>
+            <option value="KG">KG — Quilograma (kg)</option>
+            <option value="G">G — Grama (g)</option>
+            <option value="L">L — Litro (l)</option>
+            <option value="ML">ML — Mililitro (ml)</option>
+            <option value="M">M — Metro (m)</option>
+            <option value="CM">CM — Centímetro (cm)</option>
+          </select>
+        </div>
+
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
           <textarea 
@@ -280,17 +305,17 @@ export function ProductForm({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Preço de Custo (R$)</label>
           <input 
-            key={initialData?.id + "costPrice"}
+            key={initialData?.id + "costPrice" + costPrice}
             type="text" 
             name="costPrice" 
-            defaultValue={initialData?.costPrice !== undefined ? initialData.costPrice.toString().replace(".", decimalSeparator) : "0"}
+            value={costPrice.toString().replace(".", decimalSeparator)}
             placeholder={`0${decimalSeparator}00`}
             onChange={(e) => {
               const val = parseFloat(e.target.value.replace(decimalSeparator === "," ? "." : ",", decimalSeparator === "," ? "," : ".").replace(",", ".")) || 0;
               setCostPrice(val);
               setIsDirty(true);
             }}
-            className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+            className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition font-bold text-gray-800"
           />
         </div>
         <div>
@@ -306,14 +331,14 @@ export function ProductForm({
               setPrice(val);
               setIsDirty(true);
             }}
-            className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+            className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition font-bold text-gray-800"
           />
         </div>
 
         <div className="md:col-span-2 bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-blue-700 uppercase tracking-widest">Margem Bruta (Preço - Custo)</p>
-            <p className="text-sm text-blue-600 mt-1">Isso será usado no DRE e em relatórios financeiros.</p>
+            <p className="text-sm text-blue-600 mt-1">Calculado por {unit}</p>
           </div>
           <div className="text-right">
             <p className="text-xl font-black text-blue-800">R$ {(price - costPrice).toFixed(2)}</p>
@@ -324,34 +349,46 @@ export function ProductForm({
         {productType !== "SERVICE" && (
           <>
           <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Estoque Atual</label>
-          <input 
-            key={initialData?.id + "stock_display"}
-            type="text" 
-            value={initialData?.stock ? initialData.stock.toString().replace(".", decimalSeparator) : "0"}
-            disabled
-            className="w-full p-2.5 border border-gray-200 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed outline-none transition font-bold"
-          />
-          {initialData?.id && (
-             <>
-               <input type="hidden" name="stock" value={initialData.stock} />
-               <p className="text-[9px] text-blue-600 mt-1 font-bold">Use a ferramenta de AJUSTE para alterar o saldo.</p>
-             </>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {initialData?.id ? `Estoque Atual (${unit})` : `Estoque Inicial (${unit})`}
+          </label>
+          {initialData?.id ? (
+            <>
+              <input 
+                type="text" 
+                value={initialData.stock ? `${initialData.stock.toString().replace(".", decimalSeparator)} ${unit}` : `0 ${unit}`}
+                disabled
+                className="w-full p-2.5 border border-gray-200 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed outline-none transition font-bold"
+              />
+              <input type="hidden" name="stock" value={initialData.stock} />
+              <p className="text-[9px] text-blue-600 mt-1 font-bold">Use a ferramenta de AJUSTE para alterar o saldo.</p>
+            </>
+          ) : (
+            <>
+              <input 
+                type="text" 
+                name="stock"
+                defaultValue="0"
+                placeholder="0"
+                className="w-full p-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition font-bold text-gray-900 bg-white"
+              />
+              <p className="text-[9px] text-gray-400 mt-1">Informe a quantidade inicial em estoque ao cadastrar.</p>
+            </>
           )}
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-red-600 mb-1 font-bold">
-             Alerta de estoque (Mínimo)
+             Alerta de estoque (Mínimo em {unit})
           </label>
           <input 
             key={initialData?.id + "min"}
             type="text" 
             name="minStock" 
             defaultValue={initialData?.minStock !== undefined ? initialData.minStock.toString().replace(".", decimalSeparator) : (defaultMinStock || 10).toString()}
-            className="w-full p-2.5 border-red-200 border-2 bg-red-50/20 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition font-bold"
+            className="w-full p-2.5 border-red-200 border-2 bg-red-50/20 rounded-lg focus:ring-2 focus:ring-red-500 outline-none transition font-bold text-gray-900"
           />
           <p className="text-[10px] text-gray-400 mt-1 italic">
-             Mínimo sugerido: {defaultMinStock} un.
+             Mínimo sugerido: {defaultMinStock} {unit}
           </p>
         </div>
         </>
@@ -365,6 +402,11 @@ export function ProductForm({
             availableInsumos={availableInsumos}
             initialIngredients={selectedIngredients}
             onIngredientsChange={(ing) => { setSelectedIngredients(ing); setIsDirty(true); }}
+            onRecipeCostChange={(calculatedCost) => {
+              if (calculatedCost > 0) {
+                setCostPrice(calculatedCost);
+              }
+            }}
           />
         </div>
       )}
@@ -377,8 +419,6 @@ export function ProductForm({
         >
           {loading ? (
             <Loader2 className="animate-spin" size={20} />
-          ) : success ? (
-            <Save size={20} />
           ) : (
             <Save size={20} />
           )}
@@ -388,3 +428,4 @@ export function ProductForm({
     </form>
   );
 }
+

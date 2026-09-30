@@ -17,18 +17,22 @@ interface Ingredient {
   id: string;
   name: string;
   stock: number;
+  unit?: string;
+  costPrice?: number;
 }
 
 interface SelectedIngredient {
   ingredientId: string;
   name: string;
   quantity: number;
+  unit?: string;
 }
 
 interface IngredientsManagerProps {
   availableInsumos: Ingredient[];
   initialIngredients?: SelectedIngredient[];
   onIngredientsChange: (ingredients: SelectedIngredient[]) => void;
+  onRecipeCostChange?: (cost: number) => void;
   decimalSeparator?: string;
 }
 
@@ -36,15 +40,37 @@ export function IngredientsManager({
   availableInsumos, 
   initialIngredients = [], 
   onIngredientsChange,
+  onRecipeCostChange,
   decimalSeparator = "."
 }: IngredientsManagerProps) {
   const [selected, setSelected] = useState<SelectedIngredient[]>(initialIngredients);
   const [searchTerm, setSearchTerm] = useState("");
   const [isListExpanded, setIsListExpanded] = useState(true);
 
+  // Helper para obter os dados do insumo original
+  const getInsumoData = (id: string) => availableInsumos.find(i => i.id === id);
+
+  // Calcular Custo Total da Receita
+  const totalRecipeCost = selected.reduce((sum, item) => {
+    const insumo = getInsumoData(item.ingredientId);
+    const unitCost = insumo?.costPrice || 0;
+    return sum + (unitCost * item.quantity);
+  }, 0);
+
   const filteredInsumos = availableInsumos.filter(i => 
     i.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const notifyChanges = (newList: SelectedIngredient[]) => {
+    onIngredientsChange(newList);
+    if (onRecipeCostChange) {
+      const cost = newList.reduce((sum, item) => {
+        const insumo = getInsumoData(item.ingredientId);
+        return sum + ((insumo?.costPrice || 0) * item.quantity);
+      }, 0);
+      onRecipeCostChange(cost);
+    }
+  };
 
   const toggleIngredient = (insumo: Ingredient) => {
     const isSelected = selected.some(s => s.ingredientId === insumo.id);
@@ -56,12 +82,13 @@ export function IngredientsManager({
       newList = [...selected, { 
         ingredientId: insumo.id, 
         name: insumo.name, 
-        quantity: 1 
+        quantity: 1,
+        unit: insumo.unit || "UN"
       }];
     }
     
     setSelected(newList);
-    onIngredientsChange(newList);
+    notifyChanges(newList);
   };
 
   const updateQuantity = (id: string, qty: number) => {
@@ -69,7 +96,7 @@ export function IngredientsManager({
       s.ingredientId === id ? { ...s, quantity: qty } : s
     );
     setSelected(newList);
-    onIngredientsChange(newList);
+    notifyChanges(newList);
   };
 
   return (
@@ -79,6 +106,13 @@ export function IngredientsManager({
             <Layers size={18} className="text-blue-600" />
             <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Ficha Técnica (Receita)</h3>
          </div>
+
+         {selected.length > 0 && (
+           <div className="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl flex items-center gap-2">
+             <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Custo Insumos:</span>
+             <span className="text-xs font-black text-emerald-700">R$ {totalRecipeCost.toFixed(2)}</span>
+           </div>
+         )}
       </div>
 
       {/* Seção 1: Seleção com Busca e Scroll Vertical */}
@@ -119,6 +153,7 @@ export function IngredientsManager({
                     <p className="text-center py-8 text-xs text-gray-400 italic">Nenhum insumo encontrado.</p>
                  ) : filteredInsumos.map(insumo => {
                     const isSelected = selected.some(s => s.ingredientId === insumo.id);
+                    const unit = insumo.unit || "UN";
                     return (
                        <button
                           key={insumo.id}
@@ -140,7 +175,9 @@ export function IngredientsManager({
                              </div>
                              <div>
                                 <p className="text-xs font-bold text-gray-800">{insumo.name}</p>
-                                <p className="text-[9px] text-gray-400 font-medium">Estoque: {insumo.stock} un</p>
+                                <p className="text-[9px] text-gray-400 font-medium">
+                                  Estoque: {insumo.stock} {unit} • Custo: R$ {(insumo.costPrice || 0).toFixed(2)}/{unit}
+                                </p>
                              </div>
                           </div>
                           {!isSelected && (
@@ -169,36 +206,44 @@ export function IngredientsManager({
              </div>
            ) : (
              <div className="divide-y divide-gray-50">
-               {selected.map(item => (
-                 <div key={item.ingredientId} className="p-4 flex items-center justify-between group hover:bg-gray-50/50 transition">
-                    <div className="flex-1">
-                       <p className="text-xs font-bold text-gray-800">{item.name}</p>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                       <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-xl border border-transparent focus-within:border-blue-200 focus-within:bg-white transition-all">
-                          <input 
-                            type="text"
-                            value={item.quantity.toString().replace(".", decimalSeparator)}
-                            onChange={(e) => {
-                               const val = e.target.value.replace(decimalSeparator, ".");
-                               updateQuantity(item.ingredientId, parseFloat(val) || 0);
-                            }}
-                            className="w-12 bg-transparent text-center font-bold text-blue-600 outline-none text-xs"
-                          />
-                          <span className="text-[10px] text-gray-400 font-black uppercase">un</span>
-                       </div>
+               {selected.map(item => {
+                 const insumoData = getInsumoData(item.ingredientId);
+                 const unit = insumoData?.unit || item.unit || "UN";
+                 const itemCost = (insumoData?.costPrice || 0) * item.quantity;
+                 return (
+                   <div key={item.ingredientId} className="p-4 flex items-center justify-between group hover:bg-gray-50/50 transition">
+                      <div className="flex-1">
+                         <p className="text-xs font-bold text-gray-800">{item.name}</p>
+                         <p className="text-[10px] text-emerald-600 font-medium mt-0.5">
+                           Subtotal: R$ {itemCost.toFixed(2)}
+                         </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-4">
+                         <div className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-xl border border-transparent focus-within:border-blue-200 focus-within:bg-white transition-all">
+                            <input 
+                              type="text"
+                              value={item.quantity.toString().replace(".", decimalSeparator)}
+                              onChange={(e) => {
+                                 const val = e.target.value.replace(decimalSeparator, ".");
+                                 updateQuantity(item.ingredientId, parseFloat(val) || 0);
+                              }}
+                              className="w-14 bg-transparent text-center font-bold text-blue-600 outline-none text-xs"
+                            />
+                            <span className="text-[10px] text-gray-500 font-black uppercase">{unit}</span>
+                         </div>
 
-                       <button 
-                         type="button"
-                         onClick={() => toggleIngredient({ id: item.ingredientId } as any)}
-                         className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                       >
-                         <Trash2 size={16} />
-                       </button>
-                    </div>
-                 </div>
-               ))}
+                         <button 
+                           type="button"
+                           onClick={() => toggleIngredient({ id: item.ingredientId } as any)}
+                           className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                         >
+                           <Trash2 size={16} />
+                         </button>
+                      </div>
+                   </div>
+                 );
+               })}
              </div>
            )}
          </div>
@@ -206,3 +251,4 @@ export function IngredientsManager({
     </div>
   );
 }
+

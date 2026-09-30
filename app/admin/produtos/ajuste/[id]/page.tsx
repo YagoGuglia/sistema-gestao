@@ -30,6 +30,8 @@ export default async function AjusteEstoquePage({ params }: { params: Promise<{ 
     </div>
   );
 
+  const unit = product.unit || "UN";
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
       <header className="flex items-center gap-4">
@@ -41,7 +43,7 @@ export default async function AjusteEstoquePage({ params }: { params: Promise<{ 
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Movimentar Estoque</h1>
-          <p className="text-sm text-gray-500 font-medium">{product.name}</p>
+          <p className="text-sm text-gray-500 font-medium">{product.name} ({unit})</p>
         </div>
       </header>
 
@@ -58,12 +60,12 @@ export default async function AjusteEstoquePage({ params }: { params: Promise<{ 
                </div>
                <div className="text-right">
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Saldo Disponível</p>
-                  <p className="text-xl font-black text-gray-900">{product.stock} <span className="text-xs font-bold text-gray-400">un</span></p>
+                  <p className="text-xl font-black text-gray-900">{product.stock} <span className="text-xs font-bold text-gray-400 uppercase">{unit}</span></p>
                </div>
             </div>
             
             <div className="p-8">
-               <StockAdjustmentForm productId={product.id} />
+               <StockAdjustmentForm productId={product.id} unit={unit} />
             </div>
           </div>
 
@@ -96,7 +98,7 @@ export default async function AjusteEstoquePage({ params }: { params: Promise<{ 
                         "text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter shadow-sm",
                         log.quantityChange > 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"
                      )}>
-                        {log.quantityChange > 0 ? "+" : ""}{log.quantityChange} UN
+                        {log.quantityChange > 0 ? "+" : ""}{log.quantityChange} {unit}
                      </span>
                      <span className="text-[10px] text-gray-300 font-bold group-hover:text-gray-400 transition">
                         {new Intl.DateTimeFormat('pt-BR').format(new Date(log.createdAt))}
@@ -111,3 +113,4 @@ export default async function AjusteEstoquePage({ params }: { params: Promise<{ 
     </div>
   );
 }
+

@@ -50,3 +50,54 @@ export async function getStockLogs(productId: string) {
     take: 10
   });
 }
+
+export interface BatchAdjustmentItem {
+  productId: string;
+  quantityChange: number;
+  costPrice?: number;
+  justification: string;
+}
+
+export async function batchAdjustStock(adjustments: BatchAdjustmentItem[]) {
+  if (!adjustments || adjustments.length === 0) {
+    return { error: "Nenhum item informado para entrada." };
+  }
+
+  try {
+    const tenantId = await requireTenant();
+
+    await prisma.$transaction(async (tx) => {
+      for (const item of adjustments) {
+        if (!item.productId || !item.quantityChange) continue;
+
+        // Atualizar estoque e preço de custo (se fornecido)
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: { increment: item.quantityChange },
+            ...(item.costPrice && item.costPrice > 0 ? { costPrice: item.costPrice } : {})
+          }
+        });
+
+        // Registrar Log
+        await tx.stockLog.create({
+          data: {
+            tenantId,
+            productId: item.productId,
+            quantityChange: item.quantityChange,
+            type: "SCAN_BATCH",
+            justification: item.justification || "Entrada via Scan / Lote"
+          }
+        });
+      }
+    });
+
+    revalidatePath("/admin/produtos");
+    revalidatePath("/");
+    return { success: true, count: adjustments.length };
+  } catch (err) {
+    console.error("Erro no batchAdjustStock:", err);
+    return { error: "Erro ao registrar as entradas de estoque em lote." };
+  }
+}
+
