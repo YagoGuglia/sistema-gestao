@@ -93,6 +93,7 @@ export async function updateGlobalSettings(formData: FormData) {
 
   // Agendamento & Cancelamento
   const defaultSchedulingEnabled = formData.get("defaultSchedulingEnabled") === "on";
+  const schedulingAppliesTo = formData.get("schedulingAppliesTo") as string || "BOTH";
   const deliverySchedulingEnabled = formData.get("deliverySchedulingEnabled") === "on";
   const slotIntervalMin = parseInt(formData.get("slotIntervalMin") as string) || 30;
   const depositType = (formData.get("depositType") as string) || "OFF";
@@ -133,6 +134,7 @@ export async function updateGlobalSettings(formData: FormData) {
       operatingHours,
       // Agendamento
       defaultSchedulingEnabled,
+      schedulingAppliesTo,
       deliverySchedulingEnabled,
       slotIntervalMin,
       depositType,

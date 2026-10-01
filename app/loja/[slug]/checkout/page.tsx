@@ -18,6 +18,19 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
 
   const [orderType, setOrderType] = useState<"RETIRADA" | "DELIVERY">("RETIRADA");
   const [scheduledAt, setScheduledAt] = useState<string>("");
+  const [isSchedulingEnabled, setIsSchedulingEnabled] = useState(false);
+  const [showScheduling, setShowScheduling] = useState(false);
+  
+  useEffect(() => {
+    async function fetchSettings() {
+      const { getStoreSettingsForClient } = await import("@/app/actions/checkout-actions");
+      const settings = await getStoreSettingsForClient(slug);
+      if (settings?.defaultSchedulingEnabled) {
+        setIsSchedulingEnabled(true);
+      }
+    }
+    fetchSettings();
+  }, [slug]);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -362,15 +375,34 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
               )}
 
               {/* Agendamento no Sidebar */}
-              <div className="bg-gray-800 p-4 rounded-2xl border border-gray-700">
-                <BookingCalendarPicker
-                  slug={slug}
-                  durationMin={30}
-                  isDelivery={orderType === "DELIVERY"}
-                  value={scheduledAt}
-                  onChange={setScheduledAt}
-                />
-              </div>
+              {isSchedulingEnabled && (
+                <div className="bg-gray-800 p-4 rounded-2xl border border-gray-700">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-bold text-gray-200">Deseja agendar?</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowScheduling(!showScheduling);
+                        if (showScheduling) setScheduledAt("");
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showScheduling ? 'bg-vitrinia-purple' : 'bg-gray-600'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showScheduling ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                  {showScheduling && (
+                    <div className="mt-4">
+                      <BookingCalendarPicker
+                        slug={slug}
+                        durationMin={30}
+                        isDelivery={orderType === "DELIVERY"}
+                        value={scheduledAt}
+                        onChange={setScheduledAt}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {error && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs font-bold flex items-start gap-2">

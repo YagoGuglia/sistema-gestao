@@ -13,7 +13,7 @@ interface SchedulingConfigProps {
   initialSchedulingEndTime?: string | null;
   initialSchedulingPeriod?: string | null;
   initialSlotIntervalMin?: number;
-  initialDeliverySchedulingEnabled?: boolean;
+  initialSchedulingAppliesTo?: string;
 }
 
 const WEEK_DAYS = [
@@ -71,12 +71,18 @@ export function SchedulingConfig({
   initialSchedulingEndTime,
   initialSchedulingPeriod,
   initialSlotIntervalMin = 30,
-  initialDeliverySchedulingEnabled = true,
+  initialSchedulingAppliesTo = "BOTH",
 }: SchedulingConfigProps) {
   const [schedulingEnabled, setSchedulingEnabled] = useState(initialSchedulingEnabled);
   const [depositType, setDepositType] = useState(initialDepositType || "OFF");
   const [slotInterval, setSlotInterval] = useState(initialSlotIntervalMin || 30);
-  const [deliveryScheduling, setDeliveryScheduling] = useState(initialDeliverySchedulingEnabled ?? true);
+  
+  const [appliesToProducts, setAppliesToProducts] = useState(
+    initialSchedulingAppliesTo === "PRODUCTS" || initialSchedulingAppliesTo === "BOTH"
+  );
+  const [appliesToServices, setAppliesToServices] = useState(
+    initialSchedulingAppliesTo === "SERVICES" || initialSchedulingAppliesTo === "BOTH"
+  );
 
   // Parse days
   const parseDays = (): string[] => {
@@ -119,6 +125,7 @@ export function SchedulingConfig({
       <input type="hidden" name="schedulingStartTime" value={startTime} />
       <input type="hidden" name="schedulingEndTime" value={endTime} />
       <input type="hidden" name="schedulingPeriod" value={period} />
+      <input type="hidden" name="schedulingAppliesTo" value={appliesToProducts && appliesToServices ? "BOTH" : appliesToProducts ? "PRODUCTS" : "SERVICES"} />
 
       {/* ATIVAR/DESATIVAR AGENDAMENTO */}
       <div className="flex items-center justify-between p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100">
@@ -298,26 +305,51 @@ export function SchedulingConfig({
             </div>
           </div>
 
-          {/* AGENDAMENTO PARA ENTREGA DE PRODUTOS */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-200">
-            <div>
-              <label className="block text-sm font-bold text-gray-800">
-                Agendamento para Entrega de Produtos
-              </label>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Permite que clientes com compras de produtos escolham o dia e horário preferido de entrega ou retirada.
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                name="deliverySchedulingEnabled"
-                checked={deliveryScheduling}
-                onChange={(e) => setDeliveryScheduling(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500" />
+          {/* PARA O QUE O AGENDAMENTO É VÁLIDO? */}
+          <div className="space-y-3 pt-4 border-t border-gray-100">
+            <label className="block text-sm font-bold text-gray-700 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Calendar size={16} className="text-emerald-600" />
+                O agendamento será utilizado para:
+              </span>
             </label>
+            <p className="text-xs text-gray-500">
+              Selecione se o agendamento se aplica a produtos, serviços ou ambos (pelo menos um deve estar marcado).
+            </p>
+
+            <div className="flex gap-4">
+              <label className={`flex-1 flex items-center justify-between p-4 border-2 rounded-2xl cursor-pointer transition-all ${appliesToProducts ? 'border-emerald-500 bg-emerald-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📦</span>
+                  <span className="text-xs font-bold text-gray-700">Produtos (Entrega/Retirada)</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={appliesToProducts}
+                  onChange={(e) => {
+                    if (!e.target.checked && !appliesToServices) return; // Prevent unchecking both
+                    setAppliesToProducts(e.target.checked);
+                  }}
+                  className="w-4 h-4 text-emerald-500 accent-emerald-500"
+                />
+              </label>
+
+              <label className={`flex-1 flex items-center justify-between p-4 border-2 rounded-2xl cursor-pointer transition-all ${appliesToServices ? 'border-emerald-500 bg-emerald-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">✂️</span>
+                  <span className="text-xs font-bold text-gray-700">Serviços</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={appliesToServices}
+                  onChange={(e) => {
+                    if (!e.target.checked && !appliesToProducts) return; // Prevent unchecking both
+                    setAppliesToServices(e.target.checked);
+                  }}
+                  className="w-4 h-4 text-emerald-500 accent-emerald-500"
+                />
+              </label>
+            </div>
           </div>
 
           {/* SINAL E CANCELAMENTO */}

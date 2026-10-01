@@ -154,6 +154,7 @@ export default async function ConfigPage() {
           <div className="p-6">
             <SchedulingConfig
               initialSchedulingEnabled={settings.defaultSchedulingEnabled}
+              initialSchedulingAppliesTo={(settings as any).schedulingAppliesTo || "BOTH"}
               initialDepositType={settings.depositType}
               initialDepositPercentage={settings.depositPercentage}
               initialCancellationHoursLimit={settings.cancellationHoursLimit}

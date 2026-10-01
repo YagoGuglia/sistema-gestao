@@ -3,6 +3,18 @@
 import { prisma } from "@/lib/prisma";
 import { calculateOrderDuration, validateAppointmentSlot } from "@/lib/scheduling";
 
+export async function getStoreSettingsForClient(slug: string) {
+  const tenant = await prisma.tenant.findUnique({
+    where: { slug },
+    include: { settings: true }
+  });
+  if (!tenant) return null;
+  return {
+    defaultSchedulingEnabled: tenant.settings?.defaultSchedulingEnabled || false,
+    schedulingAppliesTo: tenant.settings?.schedulingAppliesTo || "SERVICES",
+  };
+}
+
 interface CheckoutData {
   slug: string;
   items: { id: string; price: number; quantity: number; observation?: string }[];

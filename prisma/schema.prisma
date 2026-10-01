@@ -161,6 +161,7 @@ model GlobalSettings {
 
   // Regras de Agendamento & Cancelamento
   defaultSchedulingEnabled Boolean @default(true)
+  schedulingAppliesTo      String  @default("BOTH") // "PRODUCTS", "SERVICES", "BOTH"
   deliverySchedulingEnabled Boolean @default(true) // Agendamento para entrega de produtos
   slotIntervalMin          Int     @default(30)    // Intervalo entre horários na grade (minutos: 15, 30, 45, 60)
   depositType              String  @default("OFF") // "OFF", "PARTIAL", "FULL"
