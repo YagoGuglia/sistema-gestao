@@ -163,7 +163,6 @@ export default async function ConfigPage() {
               initialSchedulingEndTime={(settings as any).schedulingEndTime}
               initialSchedulingPeriod={(settings as any).schedulingPeriod}
               initialSlotIntervalMin={(settings as any).slotIntervalMin ?? 30}
-              initialDeliverySchedulingEnabled={(settings as any).deliverySchedulingEnabled ?? true}
             />
           </div>
         </section>
