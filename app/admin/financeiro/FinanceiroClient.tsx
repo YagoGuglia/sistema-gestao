@@ -110,54 +110,55 @@ export function FinanceiroClient({ expenses: initialExpenses, orders, decimalSep
       </header>
 
       {/* DASHBOARD CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3 text-emerald-600 mb-2">
-            <div className="p-2 bg-emerald-50 rounded-lg"><TrendingUp size={18} /></div>
-            <h3 className="text-xs font-bold uppercase tracking-wider">Faturamento Bruto</h3>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
+        <div className="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-2 lg:gap-3 text-emerald-600 mb-1 lg:mb-2">
+            <div className="p-1.5 lg:p-2 bg-emerald-50 rounded-lg"><TrendingUp size={16} /></div>
+            <h3 className="text-[10px] lg:text-xs font-bold uppercase tracking-wider">Faturamento</h3>
           </div>
-          <p className="text-3xl font-black text-gray-900">{formatCurrency(totalRevenue)}</p>
-          <p className="text-xs text-gray-400 mt-2">Vendas concluídas (Pedidos)</p>
+          <p className="text-xl lg:text-3xl font-black text-gray-900">{formatCurrency(totalRevenue)}</p>
+          <p className="text-[10px] lg:text-xs text-gray-400 mt-1 lg:mt-2 hidden sm:block">Vendas concluídas (Pedidos)</p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3 text-red-600 mb-2">
-            <div className="p-2 bg-red-50 rounded-lg"><TrendingDown size={18} /></div>
-            <h3 className="text-xs font-bold uppercase tracking-wider">Despesas + Custos</h3>
+        <div className="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-2 lg:gap-3 text-red-600 mb-1 lg:mb-2">
+            <div className="p-1.5 lg:p-2 bg-red-50 rounded-lg"><TrendingDown size={16} /></div>
+            <h3 className="text-[10px] lg:text-xs font-bold uppercase tracking-wider">Despesas</h3>
           </div>
-          <p className="text-3xl font-black text-gray-900">{formatCurrency(totalCost + totalPaidExpenses)}</p>
-          <p className="text-xs text-gray-400 mt-2">Custos: {formatCurrency(totalCost)} | Despesas: {formatCurrency(totalPaidExpenses)}</p>
+          <p className="text-xl lg:text-3xl font-black text-gray-900">{formatCurrency(totalCost + totalPaidExpenses)}</p>
+          <p className="text-[10px] lg:text-xs text-gray-400 mt-1 lg:mt-2 hidden sm:block">Custos: {formatCurrency(totalCost)} | Despesas: {formatCurrency(totalPaidExpenses)}</p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3 text-blue-600 mb-2">
-            <div className="p-2 bg-blue-50 rounded-lg"><DollarSign size={18} /></div>
-            <h3 className="text-xs font-bold uppercase tracking-wider">Lucro Líquido</h3>
+        <div className="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-2 lg:gap-3 text-blue-600 mb-1 lg:mb-2">
+            <div className="p-1.5 lg:p-2 bg-blue-50 rounded-lg"><DollarSign size={16} /></div>
+            <h3 className="text-[10px] lg:text-xs font-bold uppercase tracking-wider">Lucro</h3>
           </div>
-          <p className={cn("text-3xl font-black", netProfit >= 0 ? "text-blue-600" : "text-red-600")}>
+          <p className={cn("text-xl lg:text-3xl font-black", netProfit >= 0 ? "text-blue-600" : "text-red-600")}>
             {formatCurrency(netProfit)}
           </p>
-          <p className="text-xs text-gray-400 mt-2">Faturamento - (Custos + Despesas Pagas)</p>
+          <p className="text-[10px] lg:text-xs text-gray-400 mt-1 lg:mt-2 hidden sm:block">Faturamento - (Custos + Despesas)</p>
         </div>
 
-        <div className="bg-vitrinia-purple p-6 rounded-3xl shadow-lg text-white">
-          <h3 className="text-xs font-bold uppercase tracking-wider opacity-80 mb-2">Margem de Lucro</h3>
-          <p className="text-4xl font-black">{margin.toFixed(1)}%</p>
-          <p className="text-xs opacity-70 mt-2">Sobre o faturamento bruto</p>
+        <div className="bg-vitrinia-purple p-4 lg:p-6 rounded-2xl lg:rounded-3xl shadow-lg text-white">
+          <h3 className="text-[10px] lg:text-xs font-bold uppercase tracking-wider opacity-80 mb-1 lg:mb-2">Margem</h3>
+          <p className="text-2xl lg:text-4xl font-black">{margin.toFixed(1)}%</p>
+          <p className="text-[10px] lg:text-xs opacity-70 mt-1 lg:mt-2 hidden sm:block">Sobre o faturamento bruto</p>
         </div>
       </div>
 
       {/* DESPESAS LIST */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-          <h2 className="text-lg font-bold text-gray-900">Despesas e Contas a Pagar</h2>
+      <div className="bg-white rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-4 lg:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-gray-50/50">
+          <h2 className="text-base lg:text-lg font-bold text-gray-900">Despesas e Contas a Pagar</h2>
           <div className="text-sm font-bold">
             <span className="text-gray-500">Pendente: </span>
             <span className="text-red-500">{formatCurrency(totalPendingExpenses)}</span>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50 text-[10px] uppercase font-black text-gray-400 tracking-widest border-b border-gray-100">
               <tr>
@@ -234,6 +235,65 @@ export function FinanceiroClient({ expenses: initialExpenses, orders, decimalSep
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile: Cards */}
+        <div className="md:hidden divide-y divide-gray-50">
+          {expenses.length === 0 ? (
+            <div className="px-4 py-12 text-center text-gray-400 text-sm">
+              Nenhuma despesa lançada.
+            </div>
+          ) : (
+            expenses.map((expense) => {
+              const isPaid = !!expense.paidAt;
+              const isOverdue = !isPaid && new Date(expense.dueDate) < new Date(new Date().setHours(0,0,0,0));
+              
+              return (
+                <div key={expense.id} className={cn("p-4 space-y-2", isPaid && "opacity-60")}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className={cn("font-bold text-sm", isPaid ? "line-through text-gray-500" : "text-gray-900")}>
+                        {expense.description}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                          {expense.category}
+                        </span>
+                        <span className={cn(
+                          "text-[10px] font-medium flex items-center gap-1",
+                          isOverdue ? "text-red-600 font-bold" : "text-gray-500"
+                        )}>
+                          <CalendarIcon size={10} />
+                          {new Date(expense.dueDate).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-sm font-black text-gray-900 shrink-0">
+                      {formatCurrency(expense.amount)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <button 
+                      onClick={() => handleTogglePaid(expense.id, isPaid)}
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-bold transition px-3 py-1.5 rounded-full border",
+                        isPaid ? "border-emerald-200 text-emerald-700 bg-emerald-50" : "border-gray-200 text-gray-500 hover:bg-gray-100"
+                      )}
+                    >
+                      {isPaid ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Circle size={14} />}
+                      {isPaid ? "Pago" : "Aberto"}
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(expense.id)} 
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" 
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
 

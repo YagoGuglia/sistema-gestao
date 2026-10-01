@@ -16,9 +16,9 @@ export default async function PedidosPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2">
             <ShoppingBag className="text-blue-600" />
             Central de Pedidos
           </h1>
@@ -27,7 +27,7 @@ export default async function PedidosPage() {
         
         <Link 
           href="/admin/pedidos/novo"
-          className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg active:scale-95"
+          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg active:scale-95 text-sm"
         >
           <Plus size={18} />
           Lançar Pedido
@@ -47,16 +47,16 @@ export default async function PedidosPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {orders.map(order => (
-            <div key={order.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition group flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+            <div key={order.id} className="bg-white rounded-2xl border border-gray-100 p-4 lg:p-5 shadow-sm hover:shadow-md transition group flex flex-col gap-3 lg:gap-4">
               
-              <div className="flex gap-4">
-                 <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl shrink-0 border border-gray-100 bg-gray-50">
+              <div className="flex gap-3 lg:gap-4">
+                 <div className="flex flex-col items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-xl shrink-0 border border-gray-100 bg-gray-50">
                     <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider">Dia</span>
-                    <span className="text-lg font-black text-blue-600">{new Date(order.createdAt).getDate().toString().padStart(2, '0')}</span>
+                    <span className="text-base lg:text-lg font-black text-blue-600">{new Date(order.createdAt).getDate().toString().padStart(2, '0')}</span>
                  </div>
                  
                  <div>
-                    <h3 className="font-bold text-gray-900 text-lg">
+                    <h3 className="font-bold text-gray-900 text-base lg:text-lg">
                        {order.user.name}
                     </h3>
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
@@ -92,7 +92,7 @@ export default async function PedidosPage() {
                  </div>
               </div>
 
-              <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 md:gap-8 w-full md:w-auto">
+              <div className="flex flex-row items-center justify-between gap-3 pt-3 border-t border-gray-50 lg:border-0 lg:pt-0 lg:justify-end lg:gap-8">
                  {order.scheduledAt && (
                    <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100">
                      <Calendar size={14} />

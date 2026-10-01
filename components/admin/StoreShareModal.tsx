@@ -113,11 +113,11 @@ export function StoreShareModal({
             </p>
           </div>
         </div>
-        {asModal && onClose && (
+        {asModal && (
           <button
             onClick={() => {
               setIsOpen(false);
-              onClose();
+              if (onClose) onClose();
             }}
             className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
           >

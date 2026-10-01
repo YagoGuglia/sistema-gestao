@@ -145,24 +145,24 @@ export function ProductListClient({
         onSuccess={() => window.location.reload()}
       />
 
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="space-y-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Estoque e Produtos</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 tracking-tight">Estoque e Produtos</h1>
           <p className="text-sm text-gray-500">Gerencie seu catálogo de vendas, matérias-primas e montagem de lote.</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <button
             onClick={() => setIsScanModalOpen(true)}
-            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95 text-sm"
+            className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95 text-sm"
           >
             <Sparkles size={18} className="text-yellow-300" />
-            Entrada por Scan / Nota
+            Scan / Nota
           </button>
 
           <button 
             onClick={() => { setEditingProduct(null); setIsDrawerOpen(true); setIsFormDirty(false); }}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95 text-sm"
+            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95 text-sm"
           >
             <Plus size={20} />
             Novo Item
@@ -171,7 +171,7 @@ export function ProductListClient({
       </header>
 
       {/* Busca e Filtros */}
-      <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+      <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 lg:p-4 rounded-2xl shadow-sm border border-gray-200">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input 
@@ -249,15 +249,16 @@ export function ProductListClient({
 function ProductSection({ title, items, icon, onEdit, onDelete, onProduce, badgeColor }: any) {
   return (
     <section>
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-3 lg:mb-4">
         {icon}
-        <h2 className="text-lg font-bold text-gray-800">{title}</h2>
+        <h2 className="text-base lg:text-lg font-bold text-gray-800">{title}</h2>
         <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-bold", badgeColor)}>
           {items.length} itens
         </span>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Desktop: Table */}
+      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[10px] tracking-wider uppercase font-bold">
             <tr>
@@ -359,6 +360,94 @@ function ProductSection({ title, items, icon, onEdit, onDelete, onProduce, badge
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile: Cards */}
+      <div className="md:hidden space-y-3">
+        {items.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-400 text-xs">Sem resultados para esta categoria.</div>
+        ) : items.map((p: any) => {
+          const isLowStock = p.stock < p.minStock;
+          const unit = p.unit || "UN";
+          return (
+            <div key={p.id} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden border shadow-sm shrink-0">
+                  {p.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package size={20} className="text-gray-300" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-bold text-gray-900 text-sm truncate">{p.name}</div>
+                      <div className="text-[10px] text-gray-400 truncate">{p.description}</div>
+                    </div>
+                    <span className="text-sm font-black text-gray-900 shrink-0">R$ {p.price.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={cn(
+                      "text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded",
+                      p.isRawMaterial ? "text-amber-600 bg-amber-50" : "text-blue-600 bg-blue-50"
+                    )}>
+                      {p.isRawMaterial ? "Insumo" : "Produto"}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className={cn(
+                        "w-2 h-2 rounded-full",
+                        isLowStock ? "bg-red-500 animate-pulse" : "bg-green-500"
+                      )} />
+                      <span className={cn("text-xs font-bold", isLowStock ? "text-red-600" : "text-gray-600")}>
+                        {p.stock} {unit}
+                      </span>
+                    </div>
+                    {isLowStock && (
+                      <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5">
+                        <AlertTriangle size={10} /> Min {p.minStock}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Ações Mobile */}
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                {!p.isRawMaterial && onProduce && (
+                  <button
+                    onClick={() => onProduce(p.id)}
+                    className="flex-1 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
+                  >
+                    <Wrench size={14} />
+                    Produzir
+                  </button>
+                )}
+                <Link
+                  href={`/admin/produtos/ajuste/${p.id}`}
+                  className="flex-1 py-2 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
+                >
+                  <ArrowLeftRight size={14} />
+                  Ajustar
+                </Link>
+                <button 
+                  onClick={() => onEdit(p.id)}
+                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                >
+                  <Edit3 size={16} />
+                </button>
+                <button 
+                  onClick={() => onDelete(p.id)}
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
