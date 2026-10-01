@@ -8,6 +8,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   image: string | null;
+  observation?: string;
 }
 
 interface CartContextType {
@@ -15,6 +16,8 @@ interface CartContextType {
   addToCart: (product: any) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
+  updateQuantity: (id: string, obs: string, quantity: number) => void;
+  updateObservation: (id: string, oldObs: string, newObs: string) => void;
   cartTotal: number;
   cartCount: number;
 }
@@ -65,11 +68,44 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = () => setItems([]);
 
+  const updateQuantity = (id: string, obs: string, quantity: number) => {
+    setItems((prev) => 
+      prev.map(i => (i.id === id && (i.observation || "") === obs) ? { ...i, quantity } : i)
+    );
+  };
+
+  const updateObservation = (id: string, oldObs: string, newObs: string) => {
+    setItems((prev) => {
+      // Check if another item with same id and newObs already exists to merge them
+      const existingIdx = prev.findIndex(i => i.id === id && (i.observation || "") === newObs);
+      if (existingIdx > -1) {
+        // We have to merge
+        let sourceQty = 0;
+        const mapped = prev.filter(i => {
+          if (i.id === id && (i.observation || "") === oldObs) {
+            sourceQty = i.quantity;
+            return false; // remove old
+          }
+          return true;
+        }).map((i, idx) => {
+          // not perfect if existingIdx changed but good enough for filter+map
+          if (i.id === id && (i.observation || "") === newObs) {
+             return { ...i, quantity: i.quantity + sourceQty };
+          }
+          return i;
+        });
+        return mapped;
+      } else {
+        return prev.map(i => (i.id === id && (i.observation || "") === oldObs) ? { ...i, observation: newObs } : i);
+      }
+    });
+  };
+
   const cartTotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
   const cartCount = items.reduce((count, item) => count + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addToCart, removeFromCart, clearCart, cartTotal, cartCount }}>
+    <CartContext.Provider value={{ items, addToCart, removeFromCart, clearCart, updateQuantity, updateObservation, cartTotal, cartCount }}>
       {children}
     </CartContext.Provider>
   );

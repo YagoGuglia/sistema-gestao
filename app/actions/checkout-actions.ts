@@ -5,7 +5,7 @@ import { calculateOrderDuration, validateAppointmentSlot } from "@/lib/schedulin
 
 interface CheckoutData {
   slug: string;
-  items: { id: string; price: number; quantity: number }[];
+  items: { id: string; price: number; quantity: number; observation?: string }[];
   customer: {
     name: string;
     phone: string;
@@ -93,6 +93,7 @@ export async function processCheckout(data: CheckoutData) {
             productId: item.id,
             quantity: item.quantity,
             price: item.price,
+            observation: item.observation || null,
           },
         });
 
