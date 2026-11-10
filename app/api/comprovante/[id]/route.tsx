@@ -30,7 +30,7 @@ export async function GET(
     }
 
     const settings = await prisma.globalSettings.findUnique({
-      where: { id: 'default' },
+      where: { tenantId: order.tenantId },
     });
 
     const companyName = settings?.companyName || 'Minha Loja';

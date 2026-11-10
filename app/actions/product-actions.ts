@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireTenant } from "@/lib/supabase/server";
+import { assertCanCreateProduct } from "@/lib/tenant";
 
 interface IngredientInput {
   ingredientId: string;
@@ -82,6 +83,9 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
         }
       });
     } else {
+      // Validar limite de 30 produtos no Plano FREE
+      await assertCanCreateProduct(tenantId);
+
       // Criar novo
       await prisma.product.create({
         data: { 
@@ -118,12 +122,13 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
 
 export async function deleteProduct(id: string) {
   try {
-    await prisma.product.delete({ where: { id } });
+    const tenantId = await requireTenant();
+    await prisma.product.deleteMany({ where: { id, tenantId } });
     revalidatePath("/admin/produtos");
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    return { error: "Não é possível excluir este produto pois ele está em uso (ex: é ingrediente de outro item)." };
+    return { error: "Não é possível excluir este produto pois ele está em uso ou você não tem permissão." };
   }
 }
 
@@ -137,8 +142,9 @@ export async function getInsumos() {
 }
 
 export async function getProduct(id: string) {
-  return await prisma.product.findUnique({
-    where: { id },
+  const tenantId = await requireTenant();
+  return await prisma.product.findFirst({
+    where: { id, tenantId },
     include: {
       ingredients: {
         include: {

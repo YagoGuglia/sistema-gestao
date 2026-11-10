@@ -109,7 +109,7 @@ export async function rejectAppointment(id: string, reason?: string) {
       await prisma.order.update({
         where: { id: apt.orderId },
         data: {
-          status: "CANCELLED",
+          status: "CANCELED",
           observation: `[RECUSADO] ${justification}`,
         },
       });
@@ -129,7 +129,7 @@ export async function updateAppointmentStatus(id: string, status: string, notes?
   try {
     await prisma.appointment.update({
       where: { id, tenantId },
-      data: { status, notes },
+      data: { status: status as any, notes },
     });
     revalidatePath("/admin/agenda");
     return { success: true };

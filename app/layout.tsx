@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
+import { CookieConsent } from "@/components/common/CookieConsent";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -21,6 +22,7 @@ export default function RootLayout({
     <html lang="pt-BR" className={`${nunito.variable} h-full antialiased`}>
       <body className="h-full font-sans bg-vitrinia-bg text-gray-900">
         {children}
+        <CookieConsent />
       </body>
     </html>
   );

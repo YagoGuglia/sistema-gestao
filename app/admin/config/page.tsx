@@ -12,6 +12,8 @@ import {
   Store,
   Calendar,
   Shield,
+  Bell,
+  Volume2,
 } from "lucide-react";
 
 export default async function ConfigPage() {
@@ -221,10 +223,11 @@ export default async function ConfigPage() {
                 defaultValue={settings.gatewayProvider || ""}
                 className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-300 outline-none transition text-sm font-medium"
               >
-                <option value="">Nenhum (pagamento presencial)</option>
-                <option value="MERCADOPAGO">Mercado Pago</option>
-                <option value="ASAAS">Asaas</option>
-                <option value="EFI">Efí (Gerencianet)</option>
+                <option value="">Nenhum (pagamento presencial / manual)</option>
+                <option value="MERCADO_PAGO">Mercado Pago (Pix com Baixa Automática)</option>
+                <option value="PABANK">PagBank / PagSeguro</option>
+                <option value="ASAAS">Asaas (Cobranças & Pix)</option>
+                <option value="STRIPE">Stripe</option>
               </select>
             </div>
 
@@ -288,6 +291,36 @@ export default async function ConfigPage() {
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500" />
               </label>
+            </div>
+          </div>
+        </section>
+
+        {/* ── ALERTAS SONOROS DE NOVOS PEDIDOS ── */}
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-transparent">
+            <h2 className="text-sm font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2">
+              <Bell size={16} />
+              Alertas Sonoros de Novos Pedidos (Campainha)
+            </h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-gray-700">
+                Intervalo de Repetição do Bipe sonoro
+              </label>
+              <p className="text-xs text-gray-500">
+                Define a frequência com que o som de alerta tocará enquanto houver pedidos aguardando ação no painel.
+              </p>
+              <select
+                name="notificationAudioInterval"
+                defaultValue={settings.notificationAudioInterval ?? 0}
+                className="w-full max-w-md p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-300 outline-none transition text-sm font-bold bg-white"
+              >
+                <option value="0">Tocar apenas 1 vez (Ao receber o pedido)</option>
+                <option value="10">Repetir a cada 10 segundos (Urgente / Delivery Rápido)</option>
+                <option value="30">Repetir a cada 30 segundos (Recomendado)</option>
+                <option value="60">Repetir a cada 1 minuto</option>
+              </select>
             </div>
           </div>
         </section>

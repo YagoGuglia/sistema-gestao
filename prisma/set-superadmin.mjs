@@ -4,7 +4,8 @@
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const EMAIL = "yagoguglia@gmail.com"; // Seu e-mail
+const envEmail = (process.env.SUPERADMIN_EMAILS || "").split(",")[0]?.trim();
+const EMAIL = envEmail || "admin@vitrinia.com.br";
 
 async function main() {
   const user = await prisma.user.findUnique({ where: { email: EMAIL } });

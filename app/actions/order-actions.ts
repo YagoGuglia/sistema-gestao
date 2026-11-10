@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireTenant } from "@/lib/supabase/server";
+import { executeGatewayRefund, GatewayProvider } from "@/lib/gateways/refund";
 
 interface OrderItemInput {
   productId: string;
@@ -43,9 +44,9 @@ export async function createManualOrder(data: {
           userId: data.userId,
           totalAmount,
           depositAmount: data.depositAmount || 0,
-          paymentMethod: data.paymentMethod || "PIX",
+          paymentMethod: (data.paymentMethod || "PIX") as any,
           pixPaymentId: data.pixPaymentId || null,
-          status: data.status || "RECEIVED",
+          status: (data.status === "RECEIVED" ? "PENDING" : data.status || "PENDING") as any,
           isManual: true,
           orderType: data.orderType,
           scheduledAt: data.scheduledAt,
@@ -144,9 +145,10 @@ export async function createManualOrder(data: {
 
 export async function updateOrderStatus(orderId: string, status: string) {
   try {
+    const normalizedStatus = status === "RECEIVED" ? "PENDING" : status === "DONE" ? "COMPLETED" : status;
     await prisma.order.update({
       where: { id: orderId },
-      data: { status }
+      data: { status: normalizedStatus as any }
     });
     revalidatePath("/admin/pedidos");
     return { success: true };
@@ -161,28 +163,67 @@ export async function cancelOrder(orderId: string, justification: string) {
     return { error: "Justificativa é obrigatória para cancelar um pedido." };
   }
   try {
-    // Get order items to restore stock
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: { items: true }
+    const tenantId = await requireTenant();
+
+    // Buscar pedido garantindo isolamento por tenantId (RLS)
+    const order = await prisma.order.findFirst({
+      where: { id: orderId, tenantId },
+      include: {
+        items: true,
+        tenant: {
+          include: { settings: true },
+        },
+      },
     });
 
-    if (!order) return { error: "Pedido não encontrado." };
-    if (order.status === "CANCELLED") return { error: "Pedido já está cancelado." };
+    if (!order) return { error: "Pedido não encontrado ou sem permissão." };
+    if (order.status === "CANCELED" || (order.status as string) === "CANCELLED" || order.status === "REFUNDED") {
+      return { error: "Pedido já está cancelado ou estornado." };
+    }
+
+    const settings = order.tenant?.settings;
+    const limitHours = settings?.cancellationHoursLimit ?? 2;
+    const hoursSinceCreation = (Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60 * 60);
+    const isWithinRefundLimit = hoursSinceCreation <= limitHours;
+
+    let refundStatusNote = "";
+    let finalStatus: "CANCELED" | "REFUNDED" = "CANCELED";
+
+    // Se o pedido tiver pagamento via gateway registrado e estiver dentro do limite de horas
+    if (order.pixPaymentId && settings?.gatewayProvider && settings?.gatewayAccessToken) {
+      if (isWithinRefundLimit) {
+        const refundResult = await executeGatewayRefund({
+          provider: settings.gatewayProvider as GatewayProvider,
+          accessToken: settings.gatewayAccessToken,
+          paymentId: order.pixPaymentId,
+          amount: order.totalAmount,
+          reason: justification,
+        });
+
+        if (refundResult.success) {
+          finalStatus = "REFUNDED";
+          refundStatusNote = `\n[ESTORNO AUTOMÁTICO REALIZADO VIA ${settings.gatewayProvider}] ID: ${refundResult.refundId}`;
+        } else {
+          refundStatusNote = `\n[ALERTA ESTORNO MANUAL NECESSÁRIO]: ${refundResult.message}`;
+        }
+      } else {
+        refundStatusNote = `\n[PRAZO DE ESTORNO EXPIRADO]: Pedido cancelado após ${limitHours}h da criação. Estorno automático desativado.`;
+      }
+    }
 
     await prisma.$transaction(async (tx) => {
-      // Update order status
+      // Atualizar status do pedido
       await tx.order.update({
         where: { id: orderId },
         data: { 
-          status: "CANCELLED",
+          status: finalStatus,
           observation: order.observation 
-            ? `${order.observation}\n[CANCELADO] ${justification}`
-            : `[CANCELADO] ${justification}`
+            ? `${order.observation}\n[CANCELADO] ${justification}${refundStatusNote}`
+            : `[CANCELADO] ${justification}${refundStatusNote}`
         }
       });
 
-      // Restore stock for each item
+      // Restaurar estoque de cada item
       for (const item of order.items) {
         await tx.product.update({
           where: { id: item.productId },
@@ -202,10 +243,11 @@ export async function cancelOrder(orderId: string, justification: string) {
 
     revalidatePath("/admin/pedidos");
     revalidatePath("/admin/produtos");
+    revalidatePath("/admin/financeiro");
     revalidatePath("/");
-    return { success: true };
-  } catch (error) {
+    return { success: true, refunded: finalStatus === "REFUNDED", note: refundStatusNote };
+  } catch (error: any) {
     console.error("Erro ao cancelar pedido:", error);
-    return { error: "Falha ao cancelar pedido." };
+    return { error: error.message || "Falha ao cancelar pedido." };
   }
 }

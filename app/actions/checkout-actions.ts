@@ -19,14 +19,25 @@ interface CheckoutData {
   slug: string;
   items: { id: string; price: number; quantity: number; observation?: string }[];
   customer: {
+    id?: string;
     name: string;
     phone: string;
-    address?: string;
-    neighborhood?: string;
-    city?: string;
   };
   orderType: "DELIVERY" | "RETIRADA";
   scheduledAt?: string | null;
+  // Endereço
+  customerAddressId?: string | null;
+  deliveryStreet?: string | null;
+  deliveryNumber?: string | null;
+  deliveryComplement?: string | null;
+  deliveryNeighborhood?: string | null;
+  deliveryCity?: string | null;
+  deliveryState?: string | null;
+  deliveryZipCode?: string | null;
+  // Pagamento
+  paymentTiming: string;
+  paymentMethod: string;
+  changeAmount?: number | null;
 }
 
 export async function processCheckout(data: CheckoutData) {
@@ -59,22 +70,16 @@ export async function processCheckout(data: CheckoutData) {
       }
     }
 
-    // Upsert Customer
+    // Upsert Customer (nome apenas)
     const user = await prisma.user.upsert({
       where: { tenantId_phone: { tenantId, phone: data.customer.phone } },
       update: {
         name: data.customer.name,
-        address: data.customer.address,
-        neighborhood: data.customer.neighborhood,
-        city: data.customer.city,
       },
       create: {
         tenantId,
         name: data.customer.name,
         phone: data.customer.phone,
-        address: data.customer.address,
-        neighborhood: data.customer.neighborhood,
-        city: data.customer.city,
         role: "CUSTOMER",
       },
     });
@@ -89,11 +94,22 @@ export async function processCheckout(data: CheckoutData) {
           tenantId,
           userId: user.id,
           totalAmount,
-          status: "RECEIVED",
+          status: "PENDING",
           isManual: false,
           orderType: data.orderType,
           scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
           deliveryFee,
+          customerAddressId: data.customerAddressId || null,
+          deliveryStreet: data.deliveryStreet || null,
+          deliveryNumber: data.deliveryNumber || null,
+          deliveryComplement: data.deliveryComplement || null,
+          deliveryNeighborhood: data.deliveryNeighborhood || null,
+          deliveryCity: data.deliveryCity || null,
+          deliveryState: data.deliveryState || null,
+          deliveryZipCode: data.deliveryZipCode || null,
+          paymentTiming: (data.paymentTiming === "NOW_PIX" ? "NOW_PIX" : "ON_SITE") as any,
+          paymentMethod: (data.paymentMethod || "PIX") as any,
+          changeAmount: data.changeAmount || null,
         },
       });
 

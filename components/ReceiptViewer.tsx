@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Share2, Link as LinkIcon, Check, MessageCircle, ArrowLeft, Store } from "lucide-react";
+import { Download, Share2, Link as LinkIcon, Check, MessageCircle, ArrowLeft, Store, Printer } from "lucide-react";
 import { createWhatsAppLink, getOrderStatusLabel } from "@/lib/whatsapp";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -177,6 +177,15 @@ export function ReceiptViewer({
               {copiedImage ? <Check size={14} /> : <Share2 size={14} />}
               {copiedImage ? "Copiado!" : "Compartilhar"}
             </button>
+
+            <Link
+              href={`/recibo/${orderId}/termica`}
+              target="_blank"
+              className="flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 text-white"
+            >
+              <Printer size={14} />
+              Imprimir Térmica 58mm
+            </Link>
 
             <button 
               onClick={handleCopyLink}

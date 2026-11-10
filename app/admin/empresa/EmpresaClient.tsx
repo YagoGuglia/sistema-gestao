@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Store, Tag, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Store, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Eye, Clock, Sparkles, ExternalLink, Palette, CheckCircle2 } from "lucide-react";
 import { createCoupon, toggleCoupon, deleteCoupon } from "@/app/actions/coupon-actions";
 import { StoreShareModal } from "@/components/admin/StoreShareModal";
 
@@ -16,7 +16,19 @@ interface Coupon {
 
 interface Props {
   tenant: { id: string; name: string; slug: string; plan: string; status: string };
-  settings: { companyName: string; companyLogoUrl: string | null };
+  settings: {
+    companyName: string;
+    companyLogoUrl: string | null;
+    bannerUrl?: string | null;
+    primaryColor?: string;
+    businessType?: string;
+    openingTime?: string;
+    closingTime?: string;
+    workDays?: string;
+    defaultSchedulingEnabled?: boolean;
+    gatewayProvider?: string | null;
+    whatsappNumber?: string | null;
+  };
   coupons: Coupon[];
 }
 
@@ -65,9 +77,86 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900">{settings.companyName}</h2>
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${tenant.plan === 'pro' ? 'bg-vitrinia-purple/10 text-vitrinia-purple' : 'bg-gray-100 text-gray-500'}`}>
+            <span className={`text-xs font-bold px-2 py-1 rounded-full ${tenant.plan === 'PRO' || tenant.plan === 'pro' ? 'bg-purple-100 text-purple-700 font-extrabold border border-purple-200' : 'bg-gray-100 text-gray-500'}`}>
               Plano {tenant.plan.toUpperCase()}
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Preview Read-Only da Vitrine do Cliente Final */}
+      <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-gray-900 font-bold">
+            <Eye className="w-5 h-5 text-vitrinia-purple" />
+            <h2 className="text-lg">Preview da Loja (Como o cliente enxerga)</h2>
+          </div>
+          <a
+            href={`/loja/${tenant.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-vitrinia-purple hover:underline bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-100"
+          >
+            Abrir Vitrine
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
+
+        {/* Mockup do Topo da Vitrine */}
+        <div className="rounded-2xl border border-gray-200 overflow-hidden bg-gray-50 shadow-inner">
+          {/* Banner */}
+          <div
+            className="h-28 w-full bg-cover bg-center relative flex items-center justify-center"
+            style={{
+              backgroundColor: settings.primaryColor || "#7C3AED",
+              backgroundImage: settings.bannerUrl ? `url(${settings.bannerUrl})` : undefined,
+            }}
+          >
+            {!settings.bannerUrl && (
+              <span className="text-white/80 font-bold text-xs uppercase tracking-widest">
+                Cor Primária Configurada ({settings.primaryColor})
+              </span>
+            )}
+          </div>
+
+          {/* Dados Resumidos */}
+          <div className="p-4 bg-white space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl border border-gray-100 overflow-hidden bg-gray-50 -mt-8 shadow-md shrink-0 flex items-center justify-center">
+                {settings.companyLogoUrl ? (
+                  <img src={settings.companyLogoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <Store className="w-6 h-6 text-gray-400" />
+                )}
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">{settings.companyName}</p>
+                <p className="text-[11px] text-gray-400 font-mono">/loja/{tenant.slug}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-gray-100 text-xs">
+              <div className="p-2 rounded-xl bg-gray-50">
+                <span className="block text-[10px] font-bold uppercase text-gray-400">Atendimento</span>
+                <span className="font-bold text-gray-800">
+                  {settings.businessType === "SERVICES" ? "Apenas Serviços" : settings.businessType === "PRODUCTS" ? "Apenas Produtos" : "Produtos & Serviços"}
+                </span>
+              </div>
+
+              <div className="p-2 rounded-xl bg-gray-50">
+                <span className="block text-[10px] font-bold uppercase text-gray-400">Horário</span>
+                <span className="font-bold text-gray-800">
+                  {settings.openingTime || "08:00"} às {settings.closingTime || "18:00"}
+                </span>
+              </div>
+
+              <div className="p-2 rounded-xl bg-gray-50 col-span-2 sm:col-span-1">
+                <span className="block text-[10px] font-bold uppercase text-gray-400">Agendamento</span>
+                <span className="font-bold text-emerald-700">
+                  {settings.defaultSchedulingEnabled ? "Ativo" : "Desativado"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

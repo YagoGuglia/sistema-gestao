@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Wallet, Plus, TrendingDown, TrendingUp, DollarSign, Calendar as CalendarIcon, Trash2, CheckCircle2, Circle } from "lucide-react";
+import { Wallet, Plus, TrendingDown, TrendingUp, DollarSign, Calendar as CalendarIcon, Trash2, CheckCircle2, Circle, Lock, Sparkles } from "lucide-react";
 import { createExpense, deleteExpense, markExpensePaid } from "@/app/actions/expense-actions";
 import { Drawer } from "@/components/Drawer";
 import { cn } from "@/lib/utils";
+import { UpgradeModal } from "@/components/common/UpgradeModal";
 
 interface Expense {
   id: string;
@@ -27,11 +28,13 @@ interface Props {
   expenses: Expense[];
   orders: Order[];
   decimalSeparator: string;
+  isPro?: boolean;
 }
 
-export function FinanceiroClient({ expenses: initialExpenses, orders, decimalSeparator }: Props) {
+export function FinanceiroClient({ expenses: initialExpenses, orders, decimalSeparator, isPro = false }: Props) {
   const [expenses, setExpenses] = useState(initialExpenses);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
 
@@ -91,7 +94,34 @@ export function FinanceiroClient({ expenses: initialExpenses, orders, decimalSep
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      {/* Banner / Card de Paywall para Usuários FREE */}
+      {!isPro && (
+        <div className="relative z-20 bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-950 text-white p-6 sm:p-8 rounded-3xl shadow-2xl border border-purple-500/30 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-purple-950 text-xs font-black uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5" />
+              Recurso Exclusivo PRO
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-white">
+              Economize 2 horas por dia e evite faltas de clientes. Assine o PRO.
+            </h2>
+            <p className="text-sm text-purple-200 max-w-xl">
+              Tenha o controle total da sua margem de lucro bruta por produto, DRE automático, contas a pagar e integração bancária.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setIsUpgradeOpen(true)}
+            className="shrink-0 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-purple-950 font-black px-6 py-4 rounded-2xl shadow-xl transition active:scale-95 text-sm sm:text-base"
+          >
+            <Lock className="w-4 h-4" />
+            Desbloquear Painel PRO
+          </button>
+        </div>
+      )}
+
+      <div className={cn("space-y-8 transition", !isPro && "filter blur-[2px] select-none pointer-events-none opacity-60")}>
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -372,6 +402,14 @@ export function FinanceiroClient({ expenses: initialExpenses, orders, decimalSep
           </div>
         </form>
       </Drawer>
+
+      </div>
+
+      <UpgradeModal
+        isOpen={isUpgradeOpen}
+        onClose={() => setIsUpgradeOpen(false)}
+        featureName="Painel Financeiro & DRE"
+      />
     </div>
   );
 }

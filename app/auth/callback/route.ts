@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isSuperAdmin } from '@/lib/auth'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -54,10 +55,8 @@ export async function GET(request: Request) {
 
       let dbUser = await prisma.user.findUnique({ where: { email } })
 
-      // Regra de Superadmin Inviolável
-      const MASTER_ADMIN_EMAIL = "yagoguglia@gmail.com" // Pode ser movido para .env futuramente
-      
-      if (email === MASTER_ADMIN_EMAIL) {
+      // Validação de Superadmin via variável de ambiente SUPERADMIN_EMAILS
+      if (isSuperAdmin(email)) {
         if (!dbUser || dbUser.role !== 'SUPERADMIN') {
           dbUser = await prisma.user.upsert({
             where: { email },

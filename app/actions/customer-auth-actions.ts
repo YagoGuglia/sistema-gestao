@@ -9,6 +9,7 @@ export interface CustomerData {
   address?: string | null;
   neighborhood?: string | null;
   city?: string | null;
+  addresses?: any[];
 }
 
 // Limpa caracteres especiais mantendo apenas números
@@ -55,6 +56,9 @@ export async function customerLoginOrRegister({
           phone: cleanPhone,
         },
       },
+      include: {
+        addresses: true
+      }
     });
 
     if (existingUser) {
@@ -67,6 +71,9 @@ export async function customerLoginOrRegister({
           neighborhood: neighborhood !== undefined ? neighborhood : existingUser.neighborhood,
           city: city !== undefined ? city : existingUser.city,
         },
+        include: {
+          addresses: true
+        }
       });
 
       return {
@@ -79,6 +86,7 @@ export async function customerLoginOrRegister({
           address: updatedUser.address,
           neighborhood: updatedUser.neighborhood,
           city: updatedUser.city,
+          addresses: updatedUser.addresses,
         },
       };
     }
@@ -114,6 +122,7 @@ export async function customerLoginOrRegister({
         address: newUser.address,
         neighborhood: newUser.neighborhood,
         city: newUser.city,
+        addresses: [],
       },
     };
   } catch (error: any) {
@@ -202,5 +211,105 @@ export async function getStoreWhatsAppInfo(slug: string) {
     };
   } catch (e) {
     return null;
+  }
+}
+
+// ----------------------------------------------------------------------------
+// GERENCIAMENTO DE ENDEREÇOS DO CLIENTE
+// ----------------------------------------------------------------------------
+
+export async function getCustomerAddresses(userId: string) {
+  try {
+    const addresses = await prisma.customerAddress.findMany({
+      where: { userId },
+      orderBy: [
+        { isDefault: 'desc' },
+        { createdAt: 'desc' }
+      ]
+    });
+    return { success: true, addresses };
+  } catch (error) {
+    console.error("Erro ao buscar endereços:", error);
+    return { error: "Erro ao carregar endereços salvos." };
+  }
+}
+
+export async function addCustomerAddress(userId: string, data: {
+  zipCode: string;
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  label?: string;
+  isDefault?: boolean;
+}) {
+  try {
+    // Se for marcado como default, remove o default dos outros
+    if (data.isDefault) {
+      await prisma.customerAddress.updateMany({
+        where: { userId },
+        data: { isDefault: false }
+      });
+    }
+
+    // Se é o primeiro endereço, força a ser o default
+    const count = await prisma.customerAddress.count({ where: { userId } });
+    const isDefault = data.isDefault || count === 0;
+
+    const address = await prisma.customerAddress.create({
+      data: {
+        userId,
+        zipCode: data.zipCode,
+        street: data.street,
+        number: data.number,
+        complement: data.complement || "",
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        label: data.label || "Casa",
+        isDefault
+      }
+    });
+
+    return { success: true, address };
+  } catch (error) {
+    console.error("Erro ao adicionar endereço:", error);
+    return { error: "Erro ao salvar o endereço." };
+  }
+}
+
+export async function deleteCustomerAddress(userId: string, addressId: string) {
+  try {
+    const addr = await prisma.customerAddress.findFirst({
+      where: { id: addressId, userId }
+    });
+
+    if (!addr) return { error: "Endereço não encontrado." };
+
+    await prisma.customerAddress.delete({
+      where: { id: addressId }
+    });
+
+    // Se deletou o default, elege o mais recente como default
+    if (addr.isDefault) {
+      const latest = await prisma.customerAddress.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+      });
+      
+      if (latest) {
+        await prisma.customerAddress.update({
+          where: { id: latest.id },
+          data: { isDefault: true }
+        });
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao deletar endereço:", error);
+    return { error: "Erro ao remover o endereço." };
   }
 }

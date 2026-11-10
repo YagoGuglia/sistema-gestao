@@ -19,7 +19,19 @@ export default async function EmpresaPage() {
   return (
     <EmpresaClient
       tenant={{ id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan, status: tenant.status }}
-      settings={{ companyName: settings?.companyName || tenant.name, companyLogoUrl: settings?.companyLogoUrl || null }}
+      settings={{
+        companyName: settings?.companyName || tenant.name,
+        companyLogoUrl: settings?.companyLogoUrl || null,
+        bannerUrl: settings?.bannerUrl || null,
+        primaryColor: settings?.primaryColor || "#7C3AED",
+        businessType: settings?.businessType || "BOTH",
+        openingTime: settings?.openingTime || "08:00",
+        closingTime: settings?.closingTime || "18:00",
+        workDays: settings?.workDays || "DOM,SEG,TER,QUA,QUI,SEX,SAB",
+        defaultSchedulingEnabled: settings?.defaultSchedulingEnabled ?? true,
+        gatewayProvider: settings?.gatewayProvider || null,
+        whatsappNumber: settings?.whatsappNumber || null,
+      }}
       coupons={coupons}
     />
   );

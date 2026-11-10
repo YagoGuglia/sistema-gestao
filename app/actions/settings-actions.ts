@@ -113,6 +113,7 @@ export async function updateGlobalSettings(formData: FormData) {
   const pixKey = formData.get("pixKey") as string || null;
   const whatsappNumber = formData.get("whatsappNumber") as string || null;
   const autoWhatsappEnabled = formData.get("autoWhatsappEnabled") === "on";
+  const notificationAudioInterval = parseInt(formData.get("notificationAudioInterval") as string) || 0;
 
   await prisma.globalSettings.update({
     where: { tenantId },
@@ -126,7 +127,7 @@ export async function updateGlobalSettings(formData: FormData) {
       companyLogoUrl,
       bannerUrl,
       primaryColor,
-      businessType,
+      businessType: (businessType || "BOTH") as any,
       // Horários
       openingTime,
       closingTime,
@@ -147,11 +148,12 @@ export async function updateGlobalSettings(formData: FormData) {
       // Comissões
       enableCommissions,
       // Gateway
-      gatewayProvider,
+      gatewayProvider: gatewayProvider ? (gatewayProvider as any) : null,
       gatewayAccessToken,
       pixKey,
       whatsappNumber,
       autoWhatsappEnabled,
+      notificationAudioInterval,
     }
   });
 

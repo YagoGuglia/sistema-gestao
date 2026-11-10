@@ -34,7 +34,7 @@ export async function createTenantAction(input: CreateTenantInput) {
         data: {
           name: storeName,
           slug,
-          plan: plano ?? "free",
+          plan: (plano?.toUpperCase() === "PRO" ? "PRO" : "FREE") as any,
         },
       });
 

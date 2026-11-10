@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode";
-import { 
-  QrCode, 
-  Copy, 
-  Check, 
-  Share2, 
-  Download, 
-  Printer, 
-  ExternalLink, 
+import {
+  QrCode,
+  Copy,
+  Check,
+  Share2,
+  Download,
+  Printer,
+  ExternalLink,
   X,
   MessageCircle,
   Sparkles
@@ -168,7 +168,7 @@ export function StoreShareModal({
       {/* Bloco do QR Code e Impressão de Mesa */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
         {/* Placa visual para exibição e impressão */}
-        <div 
+        <div
           ref={printRef}
           className="relative bg-gradient-to-b from-gray-50 to-white border-2 border-gray-200 rounded-3xl p-6 text-center flex flex-col items-center shadow-md print:border-black print:shadow-none"
         >

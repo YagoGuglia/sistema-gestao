@@ -20,6 +20,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
   const [scheduledAt, setScheduledAt] = useState<string>("");
   const [isSchedulingEnabled, setIsSchedulingEnabled] = useState(false);
   const [showScheduling, setShowScheduling] = useState(false);
+  const [paymentTiming, setPaymentTiming] = useState("ON_SITE");
+  const [paymentMethod, setPaymentMethod] = useState("PIX");
+  const [changeAmount, setChangeAmount] = useState("");
+  const [selectedAddressId, setSelectedAddressId] = useState("");
   
   useEffect(() => {
     async function fetchSettings() {
@@ -51,6 +55,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
         neighborhood: customer.neighborhood || prev.neighborhood || "",
         city: customer.city || prev.city || "",
       }));
+      if (customer.addresses && customer.addresses.length > 0) {
+        const defaultAddr = customer.addresses.find(a => a.isDefault) || customer.addresses[0];
+        setSelectedAddressId(defaultAddr.id);
+      }
     }
   }, [customer]);
 
@@ -113,14 +121,19 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
       slug,
       items: items.map(i => ({ id: i.id, price: i.price, quantity: i.quantity, observation: i.observation })),
       customer: {
+        id: activeCustomer?.id,
         name: formData.name,
         phone: cleanPhone,
-        address: formData.address,
-        neighborhood: formData.neighborhood,
-        city: formData.city,
       },
       orderType,
-      scheduledAt: scheduledAt || null
+      scheduledAt: scheduledAt || null,
+      customerAddressId: selectedAddressId || null,
+      deliveryStreet: formData.address,
+      deliveryNeighborhood: formData.neighborhood,
+      deliveryCity: formData.city,
+      paymentTiming,
+      paymentMethod,
+      changeAmount: changeAmount ? parseFloat(changeAmount.replace(",", ".")) : null,
     });
 
     setIsLoading(false);
@@ -333,46 +346,152 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
               {/* Endereço Delivery (só mostra se for delivery) */}
               {orderType === 'DELIVERY' && (
                 <div className="space-y-3 bg-gray-800 p-4 rounded-2xl border border-gray-700 animate-in fade-in">
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Endereço de Entrega *</label>
-                    <input
-                      form="checkout-form"
-                      required={orderType === 'DELIVERY'}
-                      type="text"
-                      value={formData.address}
-                      onChange={e => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-vitrinia-purple transition-all"
-                      placeholder="Rua, Número, Complemento"
-                    />
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Endereço de Entrega</label>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Bairro *</label>
-                      <input
-                        form="checkout-form"
-                        required={orderType === 'DELIVERY'}
-                        type="text"
-                        value={formData.neighborhood}
-                        onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
-                        className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-vitrinia-purple transition-all"
-                        placeholder="Centro"
-                      />
+                  
+                  {customer?.addresses && customer.addresses.length > 0 ? (
+                    <div className="space-y-2">
+                      {customer.addresses.map((addr: any) => (
+                        <label key={addr.id} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${selectedAddressId === addr.id ? 'bg-vitrinia-purple/10 border-vitrinia-purple' : 'bg-gray-900 border-gray-700 hover:border-gray-600'}`}>
+                          <input 
+                            type="radio" 
+                            name="address" 
+                            value={addr.id} 
+                            checked={selectedAddressId === addr.id}
+                            onChange={() => setSelectedAddressId(addr.id)}
+                            className="mt-1 text-vitrinia-purple bg-gray-800 border-gray-600 focus:ring-vitrinia-purple"
+                          />
+                          <div>
+                            <p className="text-xs font-bold text-gray-200">{addr.label} {addr.isDefault && <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded ml-1">Padrão</span>}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{addr.street}, {addr.number} {addr.complement ? ` - ${addr.complement}` : ''}</p>
+                            <p className="text-xs text-gray-500">{addr.neighborhood}, {addr.city}</p>
+                          </div>
+                        </label>
+                      ))}
                     </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Cidade *</label>
-                      <input
-                        form="checkout-form"
-                        required={orderType === 'DELIVERY'}
-                        type="text"
-                        value={formData.city}
-                        onChange={e => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-vitrinia-purple transition-all"
-                        placeholder="São Paulo"
-                      />
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div>
+                        <input
+                          form="checkout-form"
+                          required={orderType === 'DELIVERY' && !selectedAddressId}
+                          type="text"
+                          value={formData.address}
+                          onChange={e => setFormData({ ...formData, address: e.target.value })}
+                          className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-vitrinia-purple transition-all"
+                          placeholder="Rua, Número, Complemento"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <input
+                            form="checkout-form"
+                            required={orderType === 'DELIVERY' && !selectedAddressId}
+                            type="text"
+                            value={formData.neighborhood}
+                            onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
+                            className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-vitrinia-purple transition-all"
+                            placeholder="Bairro"
+                          />
+                        </div>
+                        <div>
+                          <input
+                            form="checkout-form"
+                            required={orderType === 'DELIVERY' && !selectedAddressId}
+                            type="text"
+                            value={formData.city}
+                            onChange={e => setFormData({ ...formData, city: e.target.value })}
+                            className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-vitrinia-purple transition-all"
+                            placeholder="Cidade"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
+
+              {/* Pagamento */}
+              <div className="bg-gray-800 p-4 rounded-2xl border border-gray-700">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Pagamento</label>
+                
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <button 
+                    type="button"
+                    onClick={() => setPaymentTiming("NOW_PIX")}
+                    className={`py-2 text-xs font-bold rounded-xl transition border ${paymentTiming === "NOW_PIX" ? 'bg-vitrinia-purple text-white border-vitrinia-purple' : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-white'}`}
+                  >
+                    Pagar Agora (Pix)
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setPaymentTiming("ON_SITE");
+                      if (paymentMethod === "PIX") setPaymentMethod("MONEY"); // muda o default se trocar
+                    }}
+                    className={`py-2 text-xs font-bold rounded-xl transition border ${paymentTiming === "ON_SITE" ? 'bg-vitrinia-purple text-white border-vitrinia-purple' : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-white'}`}
+                  >
+                    Pagar {orderType === 'DELIVERY' ? 'na Entrega' : 'na Retirada'}
+                  </button>
+                </div>
+
+                {paymentTiming === "NOW_PIX" && (
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                    <p className="text-xs text-emerald-400 font-medium text-center">
+                      O código Pix (Copia e Cola) e o QR Code serão gerados na próxima tela.
+                    </p>
+                  </div>
+                )}
+
+                {paymentTiming === "ON_SITE" && (
+                  <div className="space-y-3 mt-3 pt-3 border-t border-gray-700">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Forma de Pagamento</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        type="button"
+                        onClick={() => setPaymentMethod("MONEY")}
+                        className={`py-2 text-xs font-bold rounded-xl transition border ${paymentMethod === "MONEY" ? 'bg-gray-700 text-white border-gray-500' : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-white'}`}
+                      >
+                        Dinheiro
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setPaymentMethod("CARD_CREDIT")}
+                        className={`py-2 text-xs font-bold rounded-xl transition border ${paymentMethod === "CARD_CREDIT" ? 'bg-gray-700 text-white border-gray-500' : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-white'}`}
+                      >
+                        Cartão (Crédito)
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setPaymentMethod("CARD_DEBIT")}
+                        className={`py-2 text-xs font-bold rounded-xl transition border ${paymentMethod === "CARD_DEBIT" ? 'bg-gray-700 text-white border-gray-500' : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-white'}`}
+                      >
+                        Cartão (Débito)
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setPaymentMethod("PIX")}
+                        className={`py-2 text-xs font-bold rounded-xl transition border ${paymentMethod === "PIX" ? 'bg-gray-700 text-white border-gray-500' : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-white'}`}
+                      >
+                        Pix
+                      </button>
+                    </div>
+
+                    {paymentMethod === "MONEY" && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          placeholder="Troco para quanto? (Deixe em branco se não precisar)"
+                          value={changeAmount}
+                          onChange={e => setChangeAmount(e.target.value)}
+                          className="w-full bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-vitrinia-purple transition-all"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Agendamento no Sidebar */}
               {isSchedulingEnabled && (

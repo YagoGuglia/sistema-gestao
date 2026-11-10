@@ -1,4 +1,4 @@
-// schema.prisma - Vitrinia Core Model v2.2 (SaaS Direto)
+// schema.prisma - Vitrinia Core Model v2.3 (Multi-tenant SaaS)
 
 generator client {
   provider = "prisma-client-js"
@@ -16,12 +16,66 @@ enum Role {
   CUSTOMER
 }
 
+// -------------------------------------------------------------
+// Enums de domínio (usados nas tabelas abaixo)
+// -------------------------------------------------------------
+enum Plan {
+  FREE
+  PRO
+}
+
+enum BusinessType {
+  PRODUCTS
+  SERVICES
+  BOTH
+}
+
+enum GatewayProvider {
+  MERCADO_PAGO
+  PABANK
+  ASAAS
+  STRIPE
+  NONE   // para o plano FREE sem integração automática
+}
+
+enum PaymentMethod {
+  PIX
+  MONEY
+  CARD_DEBIT
+  CARD_CREDIT
+}
+
+enum PaymentTiming {
+  NOW_PIX   // paga imediatamente via Pix
+  ON_SITE   // paga na entrega/retirada
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  IN_TRANSIT
+  COMPLETED
+  CANCELED
+  REFUNDED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
 model Tenant {
   id        String   @id @default(uuid())
   name      String
-  slug      String   @unique // URL path: /loja/{slug}
-  plan      String   @default("FREE")
-  status    String   @default("ACTIVE") // ACTIVE, SUSPENDED
+  slug      String   @unique
+  // Plano do cliente (FREE ou PRO) – controla os paywalls no front‑end
+  plan      Plan     @default(FREE)
+  status    String   @default("ACTIVE")
   createdAt DateTime @default(now())
 
   users        User[]
@@ -38,33 +92,58 @@ model Tenant {
 
 model User {
   id       String  @id @default(uuid())
-  tenantId String? // Pode ser nulo se for um SUPERADMIN
+  tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   name     String
   email    String? @unique
-  phone    String // Não é mais unique globalmente, pois o mesmo cliente pode comprar em duas lojas diferentes
+  phone    String
   role     Role    @default(CUSTOMER)
-  password String? // Hash da senha (para Lojistas/Supabase Auth)
+  password String?
+
+  // Perfil enriquecido
+  avatarUrl String?
+  birthDate DateTime?
 
   // CRM / Dados Fiscais
-  personType String  @default("PF") // "PF" ou "PJ"
-  document   String? // CPF ou CNPJ
-  tradeName  String? // Nome Fantasia (apenas PJ)
+  personType String  @default("PF")
+  document   String?
+  tradeName  String?
 
-  // Endereço para Delivery
+  // Endereco legacy (mantido para retrocompatibilidade)
   address      String?
   neighborhood String?
   city         String?
 
+  // Relacoes
+  addresses    CustomerAddress[]
   orders       Order[]
   appointments Appointment[]
   reviews      Review[]
 
   createdAt DateTime @default(now())
 
-  // Um cliente pode usar o mesmo telefone na mesma loja, mas não dois clientes com o mesmo telefone na mesma loja.
   @@unique([tenantId, phone])
+}
+
+// Multiplos enderecos por cliente (preenchidos via ViaCEP)
+model CustomerAddress {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label        String  @default("Casa")
+  zipCode      String
+  street       String
+  number       String
+  complement   String? @default("")
+  neighborhood String
+  city         String
+  state        String
+  isDefault    Boolean @default(false)
+
+  orders    Order[]
+  createdAt DateTime @default(now())
 }
 
 model Staff {
@@ -74,8 +153,8 @@ model Staff {
 
   name           String
   phone          String?
-  roleTitle      String  @default("Atendente") // "Prestador de Serviço", "Vendedor", "Entregador", "Ajudante", "Gerente"
-  commissionRate Float   @default(0)           // Porcentagem de comissão (ex: 10.0 para 10%)
+  roleTitle      String  @default("Atendente")
+  commissionRate Float   @default(0)
   isActive       Boolean @default(true)
 
   appointments Appointment[]
@@ -89,15 +168,15 @@ model Product {
 
   name          String
   description   String?
-  price         Float   // Preço de Venda
-  costPrice     Float   @default(0) // Preço de Custo
+  price         Float
+  costPrice     Float   @default(0)
   stock         Float   @default(0)
   minStock      Float   @default(10)
-  unit          String  @default("UN") // UN, KG, G, L, ML, M, CM
+  unit          String  @default("UN")
   image         String?
   isRawMaterial Boolean @default(false)
-  isService     Boolean @default(false) // True = Serviço (aparece na vitrine de serviços)
-  durationMin   Int?    @default(30)    // Duração do serviço em minutos
+  isService     Boolean @default(false)
+  durationMin   Int?    @default(30)
 
   ingredients ProductIngredient[] @relation("ProductToIngredient")
   usedIn      ProductIngredient[] @relation("IngredientInProduct")
@@ -116,7 +195,7 @@ model StockLog {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   quantityChange Float
-  type           String // "MANUAL", "SALE", "BOM_CONSUMPTION"
+  type           String
   justification  String
 
   createdAt DateTime @default(now())
@@ -143,15 +222,16 @@ model GlobalSettings {
   companyName    String  @default("Minha Loja")
   companyLogoUrl String?
   bannerUrl      String?
-  primaryColor   String  @default("#7C3AED") // Cor de destaque da vitrine
-  businessType   String  @default("BOTH")    // "PRODUCTS", "SERVICES", "BOTH"
+  primaryColor   String  @default("#7C3AED")
+  // Tipo de negócio (usado para habilitar / desabilitar recursos)
+  businessType   BusinessType @default(BOTH)
 
-  // Legacy (mantidos para compatibilidade)
+  // Legacy
   defaultMinStock    Float  @default(10)
   decimalSeparator   String @default(".")
   defaultDeliveryFee Float  @default(0)
 
-  // Horários de Funcionamento
+  // Horarios de Funcionamento
   openingTime    String? @default("08:00")
   closingTime    String? @default("18:00")
   workDays       String? @default("DOM,SEG,TER,QUA,QUI,SEX,SAB")
@@ -160,27 +240,31 @@ model GlobalSettings {
   isRegisterOpen Boolean @default(false)
 
   // Regras de Agendamento & Cancelamento
-  defaultSchedulingEnabled Boolean @default(true)
-  schedulingAppliesTo      String  @default("BOTH") // "PRODUCTS", "SERVICES", "BOTH"
-  deliverySchedulingEnabled Boolean @default(true) // Agendamento para entrega de produtos
-  slotIntervalMin          Int     @default(30)    // Intervalo entre horários na grade (minutos: 15, 30, 45, 60)
-  depositType              String  @default("OFF") // "OFF", "PARTIAL", "FULL"
-  depositPercentage        Float   @default(0)     // ex: 20 para 20%
-  cancellationHoursLimit   Int     @default(2)     // Prazo limite para cancelamento (horas)
-  schedulingDays           String? @default("SEG,TER,QUA,QUI,SEX,SAB")
-  schedulingStartTime      String? @default("08:00")
-  schedulingEndTime        String? @default("18:00")
-  schedulingPeriod         String? @default("ALWAYS") // "1_WEEK", "2_WEEKS", "3_WEEKS", "MONTH", "ALWAYS"
+  defaultSchedulingEnabled  Boolean @default(true)
+  schedulingAppliesTo       String  @default("BOTH")
+  deliverySchedulingEnabled Boolean @default(true)
+  slotIntervalMin           Int     @default(30)
+  depositType               String  @default("OFF")
+  depositPercentage         Float   @default(0)
+  cancellationHoursLimit    Int     @default(2)
+  schedulingDays            String? @default("SEG,TER,QUA,QUI,SEX,SAB")
+  schedulingStartTime       String? @default("08:00")
+  schedulingEndTime         String? @default("18:00")
+  schedulingPeriod          String? @default("ALWAYS")
 
-  // Módulo de Comissões
+  // Modulo de Comissoes
   enableCommissions Boolean @default(false)
 
-  // Integrações de Gateway do Lojista (Credenciais Próprias)
-  gatewayProvider     String? // "MERCADOPAGO", "ASAAS", "EFI"
-  gatewayAccessToken  String? // Token/Key da conta do lojista
+  // Integracoes de Gateway
+  gatewayProvider     GatewayProvider?
+  gatewayAccessToken  String?
   pixKey              String?
   whatsappNumber      String?
   autoWhatsappEnabled Boolean @default(true)
+
+  // Alertas Sonoros de Novos Pedidos
+  // 0 = tocar 1x | 10 = repetir a cada 10s | 30 = a cada 30s | 60 = a cada 1min
+  notificationAudioInterval Int @default(0)
 
   updatedAt DateTime @default(now())
 }
@@ -192,7 +276,7 @@ model Expense {
 
   description String
   amount      Float
-  category    String   // "ALUGUEL", "ENERGIA", "INSUMOS", "SALARIO", "OUTROS"
+  category    String
   dueDate     DateTime
   paidAt      DateTime?
 
@@ -209,16 +293,37 @@ model Order {
 
   totalAmount   Float
   depositAmount Float   @default(0)
-  status        String  @default("PENDING") // PENDING, PAID, REFUNDED, COMPLETED, CANCELLED
+  // Status do pedido – enum para consistência
+  status        OrderStatus @default(PENDING)
   isManual      Boolean @default(false)
 
-  orderType     String    @default("RETIRADA") // RETIRADA, DELIVERY
-  paymentMethod String    @default("PIX")      // PIX, CREDIT_CARD, DEBIT_CARD, MONEY
-  pixPaymentId  String?   // ID da transação no Gateway do Lojista para acionar o refund
-  pixQrCode     String?
-  scheduledAt   DateTime?
-  deliveryFee   Float     @default(0)
-  observation   String?
+  orderType String @default("RETIRADA") // RETIRADA, DELIVERY
+
+  // Endereco de entrega estruturado (referencia ao CustomerAddress salvo)
+  customerAddressId String?
+  customerAddress   CustomerAddress? @relation(fields: [customerAddressId], references: [id])
+
+  // Campos de endereco inline (para clientes sem cadastro ou legado)
+  deliveryStreet       String?
+  deliveryNumber       String?
+  deliveryComplement   String?
+  deliveryNeighborhood String?
+  deliveryCity         String?
+  deliveryState        String?
+  deliveryZipCode      String?
+
+  // Pagamento — independente do tipo de pedido
+  // paymentTiming: "NOW_PIX" = pagar agora via Pix | "ON_SITE" = pagar na entrega/retirada
+  paymentTiming PaymentTiming @default(ON_SITE)
+  // paymentMethod: "PIX", "MONEY", "CARD_DEBIT", "CARD_CREDIT"
+  paymentMethod PaymentMethod @default(PIX)
+  changeAmount  Float? // Troco solicitado (quando paymentMethod = MONEY)
+
+  pixPaymentId String?
+  pixQrCode    String?
+  scheduledAt  DateTime?
+  deliveryFee  Float     @default(0)
+  observation  String?
 
   items       OrderItem[]
   appointment Appointment?
@@ -236,7 +341,7 @@ model OrderItem {
 
   quantity    Int
   price       Float
-  costPrice   Float    @default(0) // Custo no momento da venda para relatórios
+  costPrice   Float    @default(0)
   observation String?
   createdAt   DateTime @default(now())
 }
@@ -257,9 +362,9 @@ model Appointment {
 
   startTime  DateTime
   endTime    DateTime
-  status     String   @default("SCHEDULED") // SCHEDULED, CONFIRMED, COMPLETED, CANCELED
+  status     AppointmentStatus @default(SCHEDULED)
   notes      String?
-  commission Float    @default(0) // Valor de comissão calculado para este atendimento
+  commission Float    @default(0)
 }
 
 model Review {
@@ -270,7 +375,7 @@ model Review {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  rating      Int     // 1 a 5
+  rating      Int
   comment     String?
   isPublished Boolean @default(true)
 
@@ -280,11 +385,9 @@ model Review {
 model Coupon {
   id       String @id @default(uuid())
   code     String
-  discount Float // percentage or fixed value
-  type     String @default("PERCENTAGE") // PERCENTAGE or FIXED
+  discount Float
+  type     String  @default("PERCENTAGE")
 
-  // Se tenantId for nulo, o cupom é da plataforma (Super Admin).
-  // Se preenchido, é um cupom da loja para os clientes dela.
   tenantId String?
   tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -292,6 +395,5 @@ model Coupon {
   expiresAt DateTime?
   createdAt DateTime  @default(now())
 
-  // O código deve ser único por loja (tenantId + code)
   @@unique([tenantId, code])
 }
