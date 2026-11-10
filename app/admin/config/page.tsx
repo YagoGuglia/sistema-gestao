@@ -1,6 +1,7 @@
 import { getGlobalSettings, updateGlobalSettings } from "@/app/actions/settings-actions";
 import { OperatingHoursConfig } from "@/components/admin/OperatingHoursConfig";
 import { SchedulingConfig } from "@/components/admin/SchedulingConfig";
+import { WhatsAppTemplateEditor } from "@/components/admin/WhatsAppTemplateEditor";
 import {
   Settings,
   Save,
@@ -292,6 +293,24 @@ export default async function ConfigPage() {
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500" />
               </label>
             </div>
+          </div>
+        </section>
+
+        {/* ── MODELOS DE MENSAGEM WHATSAPP ── */}
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-green-50 to-transparent">
+            <h2 className="text-sm font-bold text-green-700 uppercase tracking-wider flex items-center gap-2">
+              <MessageCircle size={16} />
+              Modelos de Mensagem WhatsApp
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Personalize as mensagens enviadas automaticamente para cada situação.
+            </p>
+          </div>
+          <div className="p-6">
+            <WhatsAppTemplateEditor
+              initialTemplates={(settings as any).whatsappTemplates || null}
+            />
           </div>
         </section>
 

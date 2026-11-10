@@ -114,6 +114,7 @@ export async function updateGlobalSettings(formData: FormData) {
   const whatsappNumber = formData.get("whatsappNumber") as string || null;
   const autoWhatsappEnabled = formData.get("autoWhatsappEnabled") === "on";
   const notificationAudioInterval = parseInt(formData.get("notificationAudioInterval") as string) || 0;
+  const whatsappTemplates = formData.get("whatsappTemplates") as string || null;
 
   await prisma.globalSettings.update({
     where: { tenantId },
@@ -154,6 +155,7 @@ export async function updateGlobalSettings(formData: FormData) {
       whatsappNumber,
       autoWhatsappEnabled,
       notificationAudioInterval,
+      whatsappTemplates,
     }
   });
 

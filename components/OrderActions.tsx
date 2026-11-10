@@ -72,7 +72,8 @@ export function OrderActions({ orderId, currentStatus, userPhone, totalAmount }:
 
   const handleWhatsApp = () => {
     const baseUrl = window.location.origin;
-    const receiptUrl = `${baseUrl}/api/comprovante/${orderId}`;
+    const receiptUrl = `${baseUrl}/recibo/${orderId}`;
+    const shortCode = orderId.slice(-6).toUpperCase();
     
     // Remove tudo que não for número
     let cleanPhone = userPhone.replace(/\D/g, "");
@@ -82,7 +83,15 @@ export function OrderActions({ orderId, currentStatus, userPhone, totalAmount }:
       cleanPhone = `55${cleanPhone}`;
     }
 
-    const text = `Olá! O seu pedido de R$ ${totalAmount.toFixed(2).replace('.', ',')} foi registrado com sucesso. 📄 Veja o comprovante aqui: ${receiptUrl}`;
+    const formattedTotal = totalAmount.toFixed(2).replace('.', ',');
+
+    const text = `Olá! 👋
+
+✅ Seu pedido *#${shortCode}* no valor de *R$ ${formattedTotal}* foi registrado com sucesso!
+
+📄 *Comprovante:* ${receiptUrl}
+
+Qualquer dúvida, fale conosco por aqui mesmo. 😊`;
     
     window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`, '_blank');
   };

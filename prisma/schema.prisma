@@ -266,6 +266,13 @@ model GlobalSettings {
   // 0 = tocar 1x | 10 = repetir a cada 10s | 30 = a cada 30s | 60 = a cada 1min
   notificationAudioInterval Int @default(0)
 
+  // Templates de mensagens WhatsApp (JSON)
+  // Keys: orderConfirmed, orderPreparing, orderReady, orderDelivery, orderCancelled,
+  //       appointmentConfirmed, appointmentReminder, appointmentCancelled
+  // Variáveis: {{clientName}}, {{orderCode}}, {{totalAmount}}, {{storeName}},
+  //            {{scheduledAt}}, {{storePhone}}, {{receiptUrl}}, {{items}}
+  whatsappTemplates String?
+
   updatedAt DateTime @default(now())
 }
 

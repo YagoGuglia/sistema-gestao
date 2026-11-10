@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Printer, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import QRCode from "qrcode";
 
 export interface ThermalReceiptProps {
   order: {
@@ -16,6 +17,7 @@ export interface ThermalReceiptProps {
     changeAmount?: number | null;
     status: string;
     scheduledAt?: Date | string | null;
+    observation?: string | null;
     user: {
       name: string;
       phone: string;
@@ -46,11 +48,36 @@ export interface ThermalReceiptProps {
 }
 
 export function ThermalReceipt({ order, autoPrint = false }: ThermalReceiptProps) {
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
   useEffect(() => {
-    if (autoPrint) {
-      window.print();
+    // Gera QR Code com URL do recibo digital
+    const receiptUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/recibo/${order.id}`
+        : `/recibo/${order.id}`;
+
+    QRCode.toDataURL(
+      receiptUrl,
+      {
+        width: 140,
+        margin: 1,
+        color: { dark: "#000000", light: "#ffffff" },
+        errorCorrectionLevel: "M",
+      },
+      (err, url) => {
+        if (!err && url) setQrDataUrl(url);
+      }
+    );
+  }, [order.id]);
+
+  useEffect(() => {
+    if (autoPrint && qrDataUrl) {
+      // Espera o QR Code renderizar antes de imprimir
+      const timer = setTimeout(() => window.print(), 300);
+      return () => clearTimeout(timer);
     }
-  }, [autoPrint]);
+  }, [autoPrint, qrDataUrl]);
 
   const companyName = order.tenant.settings?.companyName || order.tenant.name;
   const shortId = order.id.slice(-6).toUpperCase();
@@ -65,6 +92,14 @@ export function ThermalReceipt({ order, autoPrint = false }: ThermalReceiptProps
     CARD_DEBIT: "CARTÃO DÉBITO",
     CARD_CREDIT: "CARTÃO CRÉDITO",
   };
+
+  const orderTypeLabels: Record<string, string> = {
+    DELIVERY: "ENTREGA",
+    PICKUP: "RETIRADA",
+    LOCAL: "LOCAL",
+  };
+
+  const subtotal = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   return (
     <div className="bg-gray-100 min-h-screen py-6 flex flex-col items-center">
@@ -130,7 +165,8 @@ export function ThermalReceipt({ order, autoPrint = false }: ThermalReceiptProps
             <span className="font-bold">TEL:</span> {order.user.phone}
           </p>
           <p>
-            <span className="font-bold">TIPO:</span> {order.orderType}
+            <span className="font-bold">TIPO:</span>{" "}
+            {orderTypeLabels[order.orderType] || order.orderType}
           </p>
           {order.scheduledAt && (
             <p className="font-bold">
@@ -186,8 +222,20 @@ export function ThermalReceipt({ order, autoPrint = false }: ThermalReceiptProps
           </table>
         </div>
 
+        {/* Observação geral */}
+        {order.observation && (
+          <div className="py-1 border-b border-black border-dashed text-[8px]">
+            <p className="font-bold">OBS GERAL:</p>
+            <p className="italic">{order.observation}</p>
+          </div>
+        )}
+
         {/* Totais */}
         <div className="py-1 border-b border-black border-dashed text-[9px] space-y-0.5">
+          <div className="flex justify-between">
+            <span>SUBTOTAL:</span>
+            <span>R$ {subtotal.toFixed(2)}</span>
+          </div>
           {order.deliveryFee && order.deliveryFee > 0 ? (
             <div className="flex justify-between">
               <span>TAXA ENTREGA:</span>
@@ -201,7 +249,7 @@ export function ThermalReceipt({ order, autoPrint = false }: ThermalReceiptProps
         </div>
 
         {/* Pagamento */}
-        <div className="py-1 text-[9px]">
+        <div className="py-1 border-b border-black border-dashed text-[9px]">
           <p>
             <span className="font-bold">PAGAMENTO:</span>{" "}
             {paymentLabels[order.paymentMethod] || order.paymentMethod}
@@ -215,12 +263,33 @@ export function ThermalReceipt({ order, autoPrint = false }: ThermalReceiptProps
               LEVAR TROCO P/: R$ {order.changeAmount.toFixed(2)}
             </p>
           )}
-          <p className="text-[8px] text-center mt-2 text-gray-600">
-            --- OBRIGADO PELA PREFERÊNCIA ---
-          </p>
+        </div>
+
+        {/* QR Code do recibo digital */}
+        <div className="py-2 flex flex-col items-center text-center">
+          {qrDataUrl ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrDataUrl}
+                alt="QR Code do Recibo"
+                className="w-24 h-24"
+              />
+              <p className="text-[7px] text-gray-600 mt-1">
+                Escaneie para ver o recibo digital
+              </p>
+            </>
+          ) : (
+            <p className="text-[8px] text-gray-400">Gerando QR Code...</p>
+          )}
+        </div>
+
+        {/* Rodapé */}
+        <div className="text-center pt-1 border-t border-black border-dashed">
+          <p className="text-[8px]">--- OBRIGADO PELA PREFERÊNCIA ---</p>
+          <p className="text-[7px] text-gray-500 mt-0.5">Powered by Vitrinia</p>
         </div>
       </div>
     </div>
   );
 }
-

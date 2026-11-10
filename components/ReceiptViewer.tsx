@@ -45,8 +45,14 @@ export function ReceiptViewer({
   const statusInfo = getOrderStatusLabel(status);
 
   // Mensagem para acompanhamento no WhatsApp
-  const formattedTotal = totalAmount ? ` no valor de *R$ ${totalAmount.toFixed(2)}*` : "";
-  const whatsappMessage = `Olá ${storeName}! 👋\n\nAcabei de fazer o pedido *#${shortCode}*${formattedTotal}.\n\nGostaria de acompanhar o andamento do meu pedido por aqui!\nComprovante: ${getImageUrlAbsolute()}`;
+  const formattedTotal = totalAmount ? ` no valor de *R$ ${totalAmount.toFixed(2).replace('.', ',')}*` : "";
+  const whatsappMessage = `Olá *${storeName}*! 👋
+
+Acabei de fazer o pedido *#${shortCode}*${formattedTotal}.
+
+Gostaria de acompanhar o andamento por aqui! 😊
+
+📄 *Comprovante:* ${getImageUrlAbsolute()}`;
   const whatsappUrl = storeWhatsApp ? createWhatsAppLink(storeWhatsApp, whatsappMessage) : null;
 
   const handleDownload = async () => {
