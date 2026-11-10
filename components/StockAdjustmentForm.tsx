@@ -28,7 +28,8 @@ export function StockAdjustmentForm({ productId, unit = "UN" }: { productId: str
     setLoading(true);
     setError(null);
 
-    const change = type === "IN" ? quantity : -quantity;
+    const rawChange = type === "IN" ? quantity : -quantity;
+    const change = Math.round(rawChange * 100) / 100;
     const res = await adjustStock(productId, change, justification);
 
     if (res.error) {
@@ -97,9 +98,13 @@ export function StockAdjustmentForm({ productId, unit = "UN" }: { productId: str
            <div className="relative flex items-center">
              <input 
                 type="number" 
-                step="0.001"
+                step="0.01"
+                min="0.01"
                 value={quantity}
-                onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value) || 0;
+                  setQuantity(Math.round(val * 100) / 100);
+                }}
                 className="w-full text-center text-3xl font-black p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none text-gray-900"
              />
              <span className="absolute right-6 text-sm font-black text-gray-400 uppercase">{unit}</span>

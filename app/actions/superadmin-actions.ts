@@ -1,14 +1,24 @@
 "use server";
+
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isSuperAdmin } from "@/lib/auth";
 
-export async function createPlatformCoupon(formData: FormData) {
+async function assertSuperAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Não autorizado");
-  const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
+  if (!user || !user.email) throw new Error("Não autorizado");
+
+  const emailIsSuper = isSuperAdmin(user.email);
+  if (emailIsSuper) return;
+
+  const dbUser = await prisma.user.findUnique({ where: { email: user.email } });
   if (dbUser?.role !== "SUPERADMIN") throw new Error("Não autorizado");
+}
+
+export async function createPlatformCoupon(formData: FormData) {
+  await assertSuperAdmin();
 
   const code = (formData.get("code") as string)?.toUpperCase().trim();
   const discount = parseFloat(formData.get("discount") as string);
@@ -29,21 +39,46 @@ export async function createPlatformCoupon(formData: FormData) {
 }
 
 export async function deletePlatformCoupon(id: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Não autorizado");
-  const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
-  if (dbUser?.role !== "SUPERADMIN") throw new Error("Não autorizado");
+  await assertSuperAdmin();
   await prisma.coupon.delete({ where: { id } });
   revalidatePath("/superadmin");
 }
 
+export async function toggleTenantStatus(tenantId: string) {
+  await assertSuperAdmin();
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { status: true }
+  });
+
+  if (!tenant) throw new Error("Loja não encontrada");
+
+  const newStatus = tenant.status === "ACTIVE" ? "BLOCKED" : "ACTIVE";
+
+  await prisma.tenant.update({
+    where: { id: tenantId },
+    data: { status: newStatus }
+  });
+
+  revalidatePath("/superadmin");
+  return { success: true, status: newStatus };
+}
+
+export async function updateTenantPlan(tenantId: string, plan: "FREE" | "PRO") {
+  await assertSuperAdmin();
+
+  await prisma.tenant.update({
+    where: { id: tenantId },
+    data: { plan: plan as any }
+  });
+
+  revalidatePath("/superadmin");
+  return { success: true, plan };
+}
+
 export async function suspendTenant(tenantId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Não autorizado");
-  const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
-  if (dbUser?.role !== "SUPERADMIN") throw new Error("Não autorizado");
-  await prisma.tenant.update({ where: { id: tenantId }, data: { status: "SUSPENDED" } });
+  await assertSuperAdmin();
+  await prisma.tenant.update({ where: { id: tenantId }, data: { status: "BLOCKED" } });
   revalidatePath("/superadmin");
 }

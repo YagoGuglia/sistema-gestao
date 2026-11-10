@@ -9,6 +9,8 @@ export async function adjustStock(productId: string, quantityChange: number, jus
     return { error: "Justificativa muito curta ou obrigatória." };
   }
 
+  const roundedChange = Math.round(quantityChange * 100) / 100;
+
   try {
     const tenantId = await requireTenant();
     const result = await prisma.$transaction(async (tx) => {
@@ -16,7 +18,7 @@ export async function adjustStock(productId: string, quantityChange: number, jus
       const updatedProduct = await tx.product.update({
         where: { id: productId },
         data: {
-          stock: { increment: quantityChange }
+          stock: { increment: roundedChange }
         }
       });
 
@@ -25,7 +27,7 @@ export async function adjustStock(productId: string, quantityChange: number, jus
         data: {
           tenantId,
           productId,
-          quantityChange,
+          quantityChange: roundedChange,
           type: "MANUAL",
           justification
         }

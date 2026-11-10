@@ -336,6 +336,8 @@ export default async function ConfigPage() {
                 className="w-full max-w-md p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-300 outline-none transition text-sm font-bold bg-white"
               >
                 <option value="0">Tocar apenas 1 vez (Ao receber o pedido)</option>
+                <option value="3">Repetir a cada 3 segundos (Urgência Máxima)</option>
+                <option value="5">Repetir a cada 5 segundos (Delivery Intenso)</option>
                 <option value="10">Repetir a cada 10 segundos (Urgente / Delivery Rápido)</option>
                 <option value="30">Repetir a cada 30 segundos (Recomendado)</option>
                 <option value="60">Repetir a cada 1 minuto</option>

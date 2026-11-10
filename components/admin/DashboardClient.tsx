@@ -86,7 +86,6 @@ export function DashboardClient({
     storeName,
   });
 
-  // Som ao entrar na página (se há pendentes e alertas estão ligados)
   const audioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -94,12 +93,46 @@ export function DashboardClient({
     }
   }, []);
 
+  // Loop de áudio sonoro baseado em notificationAudioInterval
   useEffect(() => {
-    if (pendingCount > 0 && alertsEnabled && audioEnabled && audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
+    if (pendingCount <= 0 || !alertsEnabled || !audioEnabled) return;
+
+    const playSound = () => {
+      try {
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch((err) => {
+            console.log("Autoplay aguardando interação do usuário:", err);
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao tocar áudio:", err);
+      }
+    };
+
+    // Toca imediatamente
+    playSound();
+
+    // Se o intervalo for > 0, repete a cada X segundos
+    if (audioIntervalSeconds > 0) {
+      const interval = setInterval(playSound, audioIntervalSeconds * 1000);
+      return () => clearInterval(interval);
     }
-  }, [pendingCount, alertsEnabled, audioEnabled]);
+  }, [pendingCount, alertsEnabled, audioEnabled, audioIntervalSeconds]);
+
+  const handleToggleAudio = () => {
+    const next = !audioEnabled;
+    setAudioEnabled(next);
+    if (next) {
+      // Toca na hora para dar feedback e destravar permissão de áudio do navegador
+      try {
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {});
+        }
+      } catch {}
+    }
+  };
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -126,69 +159,71 @@ export function DashboardClient({
 
   return (
     <div className="space-y-6">
-      {/* ── ALERTA DE PEDIDOS PENDENTES ── */}
-      {pendingCount > 0 && alertsEnabled && (
-        <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center animate-bounce shadow-md">
-              <Bell className="w-5 h-5" />
+      {/* ── BARRA STICKY DE ALERTA & CONTROLE ── */}
+      <div className="sticky top-0 z-30 -mx-4 lg:-mx-8 px-4 lg:px-8 py-3 bg-gray-50/95 backdrop-blur-md border-b border-gray-200/60 space-y-3 transition-all shadow-sm">
+        {pendingCount > 0 && alertsEnabled && (
+          <div className="bg-amber-500/10 border-2 border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-amber-500/5 animate-in fade-in">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center animate-bounce shadow-md shrink-0">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-extrabold text-amber-950 text-sm flex items-center gap-2">
+                  {pendingCount}{" "}
+                  {pendingCount === 1
+                    ? "pedido aguardando sua confirmação"
+                    : "pedidos aguardando sua confirmação"}
+                  !
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
+                </h4>
+                <p className="text-xs text-amber-800">
+                  Acesse a tela de pedidos para aceitar ou gerenciar.
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-extrabold text-amber-950 text-sm flex items-center gap-2">
-                {pendingCount}{" "}
-                {pendingCount === 1
-                  ? "pedido aguardando sua confirmação"
-                  : "pedidos aguardando sua confirmação"}
-                !
-                <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
-              </h4>
-              <p className="text-xs text-amber-800">
-                Acesse a tela de pedidos para aceitar ou gerenciar.
-              </p>
-            </div>
+            <Link
+              href="/admin/pedidos"
+              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition active:scale-95 shadow-md shrink-0"
+            >
+              <ShoppingCart size={16} />
+              Ver Pedidos
+            </Link>
           </div>
-          <Link
-            href="/admin/pedidos"
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition active:scale-95 shadow-md"
-          >
-            <ShoppingCart size={16} />
-            Ver Pedidos
-          </Link>
-        </div>
-      )}
-
-      {/* ── TOGGLE DE ALERTAS ── */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <button
-          onClick={() => setAlertsEnabled(!alertsEnabled)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all shadow-sm ${
-            alertsEnabled
-              ? "bg-vitrinia-purple/10 text-vitrinia-purple border-vitrinia-purple/20 hover:bg-vitrinia-purple/15"
-              : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
-          }`}
-        >
-          {alertsEnabled ? <Bell size={14} /> : <BellOff size={14} />}
-          {alertsEnabled ? "Alertas Visuais Ativos" : "Alertas Visuais Desligados"}
-        </button>
-
-        <button
-          onClick={() => setAudioEnabled(!audioEnabled)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all shadow-sm ${
-            audioEnabled
-              ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
-              : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
-          }`}
-        >
-          {audioEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
-          {audioEnabled ? "Som Ativo" : "Som Desligado"}
-        </button>
-
-        {pendingCount > 0 && (
-          <span className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 font-black text-xs px-3 py-1.5 rounded-full animate-pulse">
-            <AlertCircle size={12} />
-            {pendingCount} pendente{pendingCount > 1 ? "s" : ""}
-          </span>
         )}
+
+        {/* ── TOGGLE DE ALERTAS ── */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setAlertsEnabled(!alertsEnabled)}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all shadow-sm ${
+              alertsEnabled
+                ? "bg-vitrinia-purple/10 text-vitrinia-purple border-vitrinia-purple/20 hover:bg-vitrinia-purple/15"
+                : "bg-white text-gray-500 border-gray-200 hover:bg-gray-100"
+            }`}
+          >
+            {alertsEnabled ? <Bell size={14} /> : <BellOff size={14} />}
+            {alertsEnabled ? "Alertas Visuais Ativos" : "Alertas Visuais Desligados"}
+          </button>
+
+          <button
+            onClick={handleToggleAudio}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all shadow-sm ${
+              audioEnabled
+                ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                : "bg-white text-gray-500 border-gray-200 hover:bg-gray-100"
+            }`}
+          >
+            {audioEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+            {audioEnabled ? "Som Ativo" : "Som Desligado"}
+          </button>
+
+          {pendingCount > 0 && (
+            <span className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 font-black text-xs px-3 py-1.5 rounded-full animate-pulse">
+              <AlertCircle size={12} />
+              {pendingCount} pendente{pendingCount > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* ── KPI CARDS ── */}

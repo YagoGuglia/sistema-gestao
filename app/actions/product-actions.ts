@@ -39,8 +39,11 @@ export async function saveProduct(formData: FormData, ingredients: IngredientInp
   const rawCostPrice = parseNumeric(formData.get("costPrice") as string);
   const costPrice = Math.round(rawCostPrice * 100) / 100;
   
-  const minStock = parseNumeric(formData.get("minStock") as string);
-  const stock = parseNumeric(formData.get("stock") as string);
+  const rawMinStock = parseNumeric(formData.get("minStock") as string);
+  const minStock = Math.round(rawMinStock * 100) / 100;
+  
+  const rawStock = parseNumeric(formData.get("stock") as string);
+  const stock = Math.round(rawStock * 100) / 100;
 
   if (!name) return { error: "Nome é obrigatório" };
 

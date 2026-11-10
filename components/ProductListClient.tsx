@@ -246,6 +246,14 @@ export function ProductListClient({
   );
 }
 
+function formatUnitQuantity(val: number): string {
+  if (val === null || val === undefined || isNaN(val)) return "0";
+  return Number(val).toLocaleString("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
 function ProductSection({ title, items, icon, onEdit, onDelete, onProduce, badgeColor }: any) {
   return (
     <section>
@@ -309,13 +317,13 @@ function ProductSection({ title, items, icon, onEdit, onDelete, onProduce, badge
                           isLowStock ? "bg-red-500 animate-pulse" : "bg-green-500"
                         )} title={isLowStock ? "Estoque Baixo" : "Estoque OK"} />
                         <span className={cn("text-sm font-bold", isLowStock ? "text-red-600" : "text-gray-700")}>
-                          {p.stock} <span className="text-xs text-gray-400 font-bold uppercase">{unit}</span>
+                          {formatUnitQuantity(p.stock)} <span className="text-xs text-gray-400 font-bold uppercase">{unit}</span>
                         </span>
                       </div>
                       {isLowStock && (
                         <div className="flex items-center gap-1 mt-1">
                           <AlertTriangle size={10} className="text-red-500" />
-                          <span className="text-[10px] text-red-500 font-medium">Min {p.minStock} {unit}</span>
+                          <span className="text-[10px] text-red-500 font-medium">Min {formatUnitQuantity(p.minStock)} {unit}</span>
                         </div>
                       )}
                     </div>
@@ -402,12 +410,12 @@ function ProductSection({ title, items, icon, onEdit, onDelete, onProduce, badge
                         isLowStock ? "bg-red-500 animate-pulse" : "bg-green-500"
                       )} />
                       <span className={cn("text-xs font-bold", isLowStock ? "text-red-600" : "text-gray-600")}>
-                        {p.stock} {unit}
+                        {formatUnitQuantity(p.stock)} {unit}
                       </span>
                     </div>
                     {isLowStock && (
                       <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5">
-                        <AlertTriangle size={10} /> Min {p.minStock}
+                        <AlertTriangle size={10} /> Min {formatUnitQuantity(p.minStock)}
                       </span>
                     )}
                   </div>
