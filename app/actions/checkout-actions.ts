@@ -48,6 +48,9 @@ export async function processCheckout(data: CheckoutData) {
     });
 
     if (!tenant) throw new Error("Loja não encontrada");
+    if (tenant.status === "BLOCKED" || tenant.status === "SUSPENDED") {
+      throw new Error("Esta loja está temporariamente indisponível para receber pedidos.");
+    }
 
     const tenantId = tenant.id;
 

@@ -42,6 +42,22 @@ export default async function StorefrontPage({ params }: { params: Promise<{ slu
   if (!tenant) {
     notFound();
   }
+
+  if (tenant.status === "BLOCKED" || tenant.status === "SUSPENDED") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5 text-center">
+        <div className="max-w-md bg-white p-8 rounded-3xl border border-gray-200 shadow-sm space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto text-xl font-bold">
+            ⚠️
+          </div>
+          <h2 className="text-xl font-black text-gray-900">{tenant.settings?.companyName || tenant.name}</h2>
+          <p className="text-sm text-gray-500">
+            Esta loja está temporariamente indisponível no momento. Por favor, volte mais tarde ou contate o estabelecimento.
+          </p>
+        </div>
+      </div>
+    );
+  }
   
   const primaryColor = tenant.settings?.primaryColor || "#7C3AED";
   const storeName = tenant.settings?.companyName || tenant.name;

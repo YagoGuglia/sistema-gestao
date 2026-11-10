@@ -25,7 +25,6 @@ export function OnboardingForm({ email, name, plano }: { email: string; name: st
   const [neighborhood, setNeighborhood] = useState("");
   const [city, setCity] = useState("");
   const [category, setCategory] = useState("");
-  const [setupPremium, setSetupPremium] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -288,31 +287,6 @@ export function OnboardingForm({ email, name, plano }: { email: string; name: st
                 placeholder="São Paulo"
               />
             </div>
-          </div>
-
-          {/* Oferta Setup Premium (Serviço de Aceleração) */}
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-4 shadow-sm space-y-2">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={setupPremium}
-                onChange={(e) => setSetupPremium(e.target.checked)}
-                className="mt-1 h-5 w-5 rounded border-gray-300 text-vitrinia-purple focus:ring-vitrinia-purple"
-              />
-              <div className="flex-1">
-                <div className="flex items-center justify-between flex-wrap gap-1">
-                  <span className="text-sm font-black text-gray-900 flex items-center gap-1.5">
-                    ⭐ Setup Premium (Aceleração em 24h)
-                  </span>
-                  <span className="text-xs font-black bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">
-                    R$ 149,00 taxa única
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600 mt-1">
-                  Quer economizar tempo? <strong>Nossa equipe cadastra seus produtos e configura sua loja em até 24h.</strong>
-                </p>
-              </div>
-            </label>
           </div>
 
           {/* Resumo */}
