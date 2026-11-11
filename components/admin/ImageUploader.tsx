@@ -7,10 +7,9 @@ import { uploadStoreAsset, removeStoreAsset, AssetType } from "@/app/actions/upl
 interface ImageUploaderProps {
   type: AssetType;
   label: string;
-  description: string;
+  description?: string;
   recommendation: string;
   initialUrl?: string | null;
-  aspectRatioClass?: string;
   onUploaded?: (url: string) => void;
   onRemoved?: () => void;
 }
@@ -21,7 +20,6 @@ export function ImageUploader({
   description,
   recommendation,
   initialUrl = null,
-  aspectRatioClass = "aspect-[3/1]",
   onUploaded,
   onRemoved,
 }: ImageUploaderProps) {
@@ -38,7 +36,7 @@ export function ImageUploader({
     setSuccess(false);
 
     if (!file.type.startsWith("image/")) {
-      setError("Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP, SVG).");
+      setError("Selecione um arquivo de imagem válido (PNG, JPG, WebP, SVG).");
       return;
     }
 
@@ -47,11 +45,9 @@ export function ImageUploader({
       return;
     }
 
-    // Gerar preview local imediato
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
 
-    // Enviar via Server Action
     const formData = new FormData();
     formData.append("file", file);
     formData.append("type", type);
@@ -78,18 +74,9 @@ export function ImageUploader({
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleRemove = () => {
-    if (!confirm("Deseja realmente remover esta imagem? A vitrine voltará ao padrão.")) return;
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Deseja remover esta imagem? A vitrine usará o padrão.")) return;
     setError(null);
     startTransition(async () => {
       const res = await removeStoreAsset(type);
@@ -107,56 +94,18 @@ export function ImageUploader({
   const activeUrl = previewUrl || currentUrl;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-4 transition hover:border-gray-200">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-gray-900 text-sm sm:text-base">{label}</h3>
-            {activeUrl && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <Check className="w-3 h-3" />
-                Ativo
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
-        </div>
-
-        <span className="text-[11px] text-gray-400 font-medium self-start sm:self-auto bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
-          {recommendation}
-        </span>
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100 animate-in fade-in">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-700">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {success && (
-        <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 p-3 rounded-xl border border-emerald-100 animate-in fade-in">
-          <Check className="w-4 h-4 shrink-0 text-emerald-600" />
-          <span>Imagem atualizada e salva com sucesso!</span>
-        </div>
-      )}
-
-      {/* Área de Visualização e Upload */}
+    <div className="space-y-1.5">
       <div
         onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onClick={() => !isPending && fileInputRef.current?.click()}
-        className={`relative cursor-pointer group rounded-2xl border-2 border-dashed transition overflow-hidden flex flex-col items-center justify-center p-4 text-center ${
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        className={`relative flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${
           isDragging
-            ? "border-vitrinia-purple bg-purple-50/50"
+            ? "border-vitrinia-purple bg-purple-50/50 shadow-xs"
             : activeUrl
-            ? "border-gray-200 bg-gray-50/50 hover:border-vitrinia-purple/50"
-            : "border-gray-200 hover:border-vitrinia-purple/60 hover:bg-purple-50/30 bg-gray-50/30"
-        } ${type === "logo" ? "h-36 max-w-xs mx-auto" : aspectRatioClass}`}
+            ? "border-gray-200 bg-white hover:border-gray-300"
+            : "border-gray-200/90 bg-gray-50/60 hover:bg-gray-50 hover:border-gray-300"
+        }`}
       >
         <input
           ref={fileInputRef}
@@ -171,68 +120,101 @@ export function ImageUploader({
           disabled={isPending}
         />
 
-        {activeUrl ? (
-          <div className="relative w-full h-full flex items-center justify-center">
-            <img
-              src={activeUrl}
-              alt={label}
-              className={`w-full h-full object-cover rounded-xl transition duration-300 group-hover:opacity-90 ${
-                type === "logo" ? "object-contain p-2" : "object-cover"
-              }`}
-            />
-            {/* Overlay ao passar o mouse */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-2 text-white">
-              <RefreshCw className="w-4 h-4 animate-spin-reverse" />
-              <span className="text-xs font-bold">Clique ou arraste para trocar</span>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-2 py-4">
-            <div className="w-10 h-10 rounded-2xl bg-vitrinia-purple/10 text-vitrinia-purple flex items-center justify-center mx-auto transition group-hover:scale-110">
-              {type === "logo" ? <ImageIcon className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-800">
-                Clique para enviar ou arraste a imagem
-              </p>
-              <p className="text-[11px] text-gray-400 mt-0.5">PNG, JPG, WebP ou SVG até 5MB</p>
-            </div>
-          </div>
-        )}
+        {/* Thumbnail + Info */}
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Miniatura Compacta */}
+          <div
+            onClick={() => !isPending && fileInputRef.current?.click()}
+            className="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 shrink-0 relative cursor-pointer group flex items-center justify-center shadow-2xs"
+            title="Clique para enviar ou trocar imagem"
+          >
+            {activeUrl ? (
+              <>
+                <img
+                  src={activeUrl}
+                  alt={label}
+                  className="w-full h-full object-cover transition group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white">
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </div>
+              </>
+            ) : (
+              <div className="text-gray-400 group-hover:text-vitrinia-purple transition">
+                {type === "logo" ? <ImageIcon className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+              </div>
+            )}
 
-        {isPending && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-vitrinia-purple z-20">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span className="text-xs font-bold">Enviando imagem para Supabase...</span>
+            {isPending && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-2xs flex items-center justify-center text-vitrinia-purple">
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Botões de Ação Auxiliares */}
-      <div className="flex items-center justify-between pt-1">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isPending}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-vitrinia-purple bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition disabled:opacity-50"
-        >
-          <Upload className="w-3.5 h-3.5" />
-          {activeUrl ? "Trocar imagem" : "Selecionar arquivo"}
-        </button>
+          {/* Textos */}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-xs sm:text-sm text-gray-900 truncate">
+                {label}
+              </span>
+              {activeUrl ? (
+                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <Check className="w-2.5 h-2.5" />
+                  Ativo
+                </span>
+              ) : (
+                <span className="text-[10px] text-gray-400">Padrão</span>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-500 truncate mt-0.5">
+              {recommendation}
+            </p>
+          </div>
+        </div>
 
-        {activeUrl && (
+        {/* Botões Compactos (Shadcn UI style) */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            onClick={handleRemove}
+            onClick={() => fileInputRef.current?.click()}
             disabled={isPending}
-            className="inline-flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2.5 py-1.5 rounded-xl transition disabled:opacity-50"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-100 border border-gray-200 px-2.5 py-1.5 rounded-lg shadow-2xs transition active:scale-95 disabled:opacity-50"
           >
-            <X className="w-3.5 h-3.5" />
-            Remover imagem
+            <Upload className="w-3 h-3 text-gray-500" />
+            <span className="hidden sm:inline">{activeUrl ? "Trocar" : "Upload"}</span>
           </button>
-        )}
+
+          {activeUrl && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              disabled={isPending}
+              className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition disabled:opacity-50"
+              title="Remover imagem"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-1.5 text-[11px] text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-700">
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
+      {success && (
+        <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+          <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+          <span>Imagem atualizada com sucesso!</span>
+        </div>
+      )}
     </div>
   );
 }
-

@@ -3,6 +3,58 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { requireTenant } from "@/lib/supabase/server";
+import { z } from "zod";
+
+const VisualSettingsSchema = z.object({
+  storeFontFamily: z.string().default("Inter"),
+  storeSlogan: z
+    .string()
+    .max(45, "A frase de efeito / slogan deve ter no máximo 45 caracteres.")
+    .nullable()
+    .optional(),
+  bannerOpacity: z.number().min(0.1).max(1.0).default(1.0),
+  useSolidColorForHeader: z.boolean().default(false),
+  primaryColor: z.string().default("#7C3AED"),
+});
+
+export async function updateStoreVisualSettings(formData: FormData): Promise<{ success: boolean; error?: string }> {
+  try {
+    const tenantId = await requireTenant();
+
+    const rawData = {
+      storeFontFamily: (formData.get("storeFontFamily") as string) || "Inter",
+      storeSlogan: (formData.get("storeSlogan") as string)?.trim() || null,
+      bannerOpacity: parseFloat(formData.get("bannerOpacity") as string) || 1.0,
+      useSolidColorForHeader: formData.get("useSolidColorForHeader") === "true" || formData.get("useSolidColorForHeader") === "on",
+      primaryColor: (formData.get("primaryColor") as string) || "#7C3AED",
+    };
+
+    const parsed = VisualSettingsSchema.safeParse(rawData);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message || "Dados visuais inválidos." };
+    }
+
+    await prisma.globalSettings.update({
+      where: { tenantId },
+      data: {
+        storeFontFamily: parsed.data.storeFontFamily,
+        storeSlogan: parsed.data.storeSlogan,
+        bannerOpacity: parsed.data.bannerOpacity,
+        useSolidColorForHeader: parsed.data.useSolidColorForHeader,
+        primaryColor: parsed.data.primaryColor,
+      },
+    });
+
+    revalidatePath("/admin/empresa");
+    revalidatePath("/admin/config");
+    revalidatePath("/loja", "layout");
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("Erro ao salvar configurações visuais:", err);
+    return { success: false, error: err?.message || "Falha ao salvar configurações visuais." };
+  }
+}
 
 export async function getGlobalSettings() {
   const tenantId = await requireTenant();
@@ -87,6 +139,10 @@ export async function updateGlobalSettings(formData: FormData) {
   const superBannerUrl = formData.get("superBannerUrl") as string || null;
   const promoBannerUrl = formData.get("promoBannerUrl") as string || null;
   const primaryColor = (formData.get("primaryColor") as string) || "#7C3AED";
+  const storeFontFamily = (formData.get("storeFontFamily") as string) || undefined;
+  const storeSlogan = formData.has("storeSlogan") ? (formData.get("storeSlogan") as string)?.slice(0, 45) : undefined;
+  const bannerOpacity = formData.has("bannerOpacity") ? (parseFloat(formData.get("bannerOpacity") as string) || 1.0) : undefined;
+  const useSolidColorForHeader = formData.has("useSolidColorForHeader") ? (formData.get("useSolidColorForHeader") === "on" || formData.get("useSolidColorForHeader") === "true") : undefined;
   const businessType = (formData.get("businessType") as string) || "BOTH";
 
   // Horários e Intervalos
@@ -135,6 +191,10 @@ export async function updateGlobalSettings(formData: FormData) {
       superBannerUrl,
       promoBannerUrl,
       primaryColor,
+      storeFontFamily,
+      storeSlogan,
+      bannerOpacity,
+      useSolidColorForHeader,
       businessType: (businessType || "BOTH") as any,
       // Horários
       openingTime,

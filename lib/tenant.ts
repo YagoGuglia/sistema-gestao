@@ -17,6 +17,10 @@ export interface TenantWithSettings {
     bannerUrl: string | null;
     superBannerUrl?: string | null;
     promoBannerUrl?: string | null;
+    storeFontFamily?: string | null;
+    storeSlogan?: string | null;
+    bannerOpacity?: number | null;
+    useSolidColorForHeader?: boolean | null;
     businessType: "PRODUCTS" | "SERVICES" | "BOTH";
     openingTime: string | null;
     closingTime: string | null;

@@ -127,6 +127,33 @@ export default async function ConfigPage() {
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
                 />
               </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-gray-700">Fonte da Loja (Tipografia)</label>
+                <select
+                  name="storeFontFamily"
+                  defaultValue={settings.storeFontFamily || "Inter"}
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm font-medium bg-white"
+                >
+                  <option value="Inter">Inter (Moderna & Padrão)</option>
+                  <option value="Playfair Display">Playfair Display (Elegante com Serifa)</option>
+                  <option value="Roboto">Roboto (Neutra & Versátil)</option>
+                  <option value="Montserrat">Montserrat (Geométrica & Marcante)</option>
+                  <option value="Poppins">Poppins (Amigável & Arredondada)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-gray-700">Frase de Efeito / Slogan (Máx 45 chars)</label>
+                <input
+                  type="text"
+                  name="storeSlogan"
+                  maxLength={45}
+                  defaultValue={settings.storeSlogan || "O SEU PEDIDO EM UM CLIQUE"}
+                  placeholder="Ex: O seu presente está aqui"
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

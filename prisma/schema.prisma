@@ -219,13 +219,17 @@ model GlobalSettings {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Identidade & Marca
-  companyName    String  @default("Minha Loja")
-  companyLogoUrl String?
-  logoUrl        String?
-  bannerUrl      String?
-  superBannerUrl String?
-  promoBannerUrl String?
-  primaryColor   String  @default("#7C3AED")
+  companyName            String  @default("Minha Loja")
+  companyLogoUrl         String?
+  logoUrl                String?
+  bannerUrl              String?
+  superBannerUrl         String?
+  promoBannerUrl         String?
+  primaryColor           String  @default("#7C3AED")
+  storeFontFamily        String  @default("Inter")
+  storeSlogan            String? @default("O SEU PEDIDO EM UM CLIQUE")
+  bannerOpacity          Float   @default(1.0)
+  useSolidColorForHeader Boolean @default(false)
   // Tipo de negócio (usado para habilitar / desabilitar recursos)
   businessType   BusinessType @default(BOTH)
 

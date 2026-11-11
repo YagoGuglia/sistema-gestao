@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Package, LogOut, MessageCircle, Store } from "lucide-react";
+import { User, Package, LogOut, MessageCircle } from "lucide-react";
 import { useCustomerAuth } from "./CustomerAuthContext";
 import { createWhatsAppLink } from "@/lib/whatsapp";
 
@@ -10,7 +10,11 @@ interface StoreHeaderProps {
   logoUrl?: string | null;
   superBannerUrl?: string | null;
   bannerUrl?: string | null;
-  category?: string;
+  slogan?: string | null;
+  fontFamily?: string;
+  bannerOpacity?: number;
+  useSolidColorForHeader?: boolean;
+  primaryColor?: string;
   isOpen?: boolean;
   whatsappNumber?: string | null;
 }
@@ -20,31 +24,42 @@ export function StoreHeader({
   logoUrl,
   superBannerUrl,
   bannerUrl,
-  category = "O seu pedido em um clique",
+  slogan = "O SEU PEDIDO EM UM CLIQUE",
+  fontFamily = "Inter",
+  bannerOpacity = 1.0,
+  useSolidColorForHeader = false,
+  primaryColor = "#7C3AED",
   isOpen = true,
   whatsappNumber,
 }: StoreHeaderProps) {
   const { customer, isLoggedIn, openLoginModal, openOrdersModal, logout } = useCustomerAuth();
   const [showMenu, setShowMenu] = useState(false);
 
-  const headerBanner = superBannerUrl || bannerUrl;
+  const headerBanner = useSolidColorForHeader ? null : (superBannerUrl || bannerUrl);
   const firstName = customer?.name ? customer.name.split(" ")[0] : "";
   const whatsappHelpUrl = whatsappNumber 
     ? createWhatsAppLink(whatsappNumber, `Olá ${storeName}! Gostaria de tirar uma dúvida sobre a loja e acompanhar meus pedidos.`)
     : null;
 
   return (
-    <header className="w-full relative shadow-md">
+    <header className="w-full relative shadow-xs">
       {/* Container do Superbanner / Banner de Cabeçalho */}
       <div 
-        className="w-full relative rounded-b-[2rem] sm:rounded-b-[2.5rem] overflow-hidden bg-cover bg-center transition-all min-h-[220px] sm:min-h-[250px] flex flex-col justify-between"
+        className="w-full relative rounded-b-[2rem] sm:rounded-b-[2.5rem] overflow-hidden transition-all min-h-[220px] sm:min-h-[250px] flex flex-col justify-between"
         style={{
-          backgroundColor: headerBanner ? "#18181b" : "var(--brand-color, #7C3AED)",
-          backgroundImage: headerBanner ? `url(${headerBanner})` : undefined,
+          backgroundColor: primaryColor,
         }}
       >
-        {/* Camada de Gradiente / Overlay para garantir legibilidade dos textos e logo */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/75 backdrop-blur-[0.5px]" />
+        {/* Imagem do Banner com Translucidez Ajustável (sem overlay escuro forçado) */}
+        {headerBanner && (
+          <div
+            className="absolute inset-0 bg-cover bg-center pointer-events-none transition-opacity duration-300"
+            style={{
+              backgroundImage: `url(${headerBanner})`,
+              opacity: bannerOpacity,
+            }}
+          />
+        )}
 
         {/* Barra Superior Flutuante (Navbar com Ações) */}
         <div className="relative z-10 w-full px-4 py-3 sm:px-6 flex items-center justify-between">
@@ -52,7 +67,7 @@ export function StoreHeader({
             <div className="font-black text-sm tracking-wider bg-white/20 backdrop-blur-md text-white w-8 h-8 rounded-xl flex items-center justify-center shadow-xs">
               V
             </div>
-            <span className="font-extrabold text-xs tracking-tight text-white/90 drop-shadow-xs">
+            <span className="font-extrabold text-xs tracking-tight text-white/95 drop-shadow-xs">
               vitrinia
             </span>
           </div>
@@ -63,7 +78,7 @@ export function StoreHeader({
                 href={whatsappHelpUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 bg-emerald-500/90 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm backdrop-blur-xs active:scale-95"
+                className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full transition shadow-sm active:scale-95"
                 title="Acompanhar pelo WhatsApp"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
@@ -127,10 +142,10 @@ export function StoreHeader({
           </div>
         </div>
 
-        {/* Centro do Cabeçalho: Logo Circular da Empresa + Nome da Loja + Status */}
+        {/* Centro do Cabeçalho: Logo Circular da Empresa + Nome da Loja + Slogan + Status */}
         <div className="relative z-10 flex flex-col items-center justify-center px-4 pt-1 pb-6 text-center">
-          {/* Logo da Empresa (Circular, com moldura e sombra elegante) */}
-          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-full p-1 shadow-2xl flex items-center justify-center overflow-hidden border-2 border-white/90">
+          {/* Logo da Empresa (Circular, com moldura branca elegante) */}
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-full p-1 shadow-xl flex items-center justify-center overflow-hidden border-2 border-white/90">
             {logoUrl ? (
               <img
                 src={logoUrl}
@@ -144,26 +159,29 @@ export function StoreHeader({
             )}
           </div>
 
-          {/* Nome da Loja (Tipografia em destaque sobre o banner de cabeçalho) */}
-          <h1 className="mt-3 text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight drop-shadow-md">
+          {/* Nome da Loja com Tipografia Personalizada */}
+          <h1 
+            className="mt-3 text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight drop-shadow-sm"
+            style={{ fontFamily: fontFamily ? `"${fontFamily}", sans-serif` : "inherit" }}
+          >
             {storeName}
           </h1>
 
-          {/* Slogan ou Categoria */}
-          <p className="text-xs sm:text-sm text-white/90 font-medium tracking-wide uppercase mt-0.5 drop-shadow-xs max-w-sm">
-            {category}
+          {/* Frase de Efeito / Slogan Customizado (máx 45 caracteres) */}
+          <p className="text-xs sm:text-sm text-white/95 font-medium tracking-wide uppercase mt-1 drop-shadow-xs max-w-md truncate px-2">
+            {slogan || "O SEU PEDIDO EM UM CLIQUE"}
           </p>
 
           {/* Status Aberto/Fechado */}
           <div className="mt-2.5">
             {isOpen ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 backdrop-blur-md shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/90 text-white shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                 Aberto agora
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-red-500/30 text-red-200 border border-red-400/40 backdrop-blur-md shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-red-400" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-red-500/90 text-white shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-white" />
                 Fechado no momento
               </span>
             )}

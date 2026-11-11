@@ -51,11 +51,11 @@ export function StorefrontClient({
       {/* BANNER DE PROMOÇÃO (LOGO ACIMA DOS PRODUTOS) */}
       <section>
         {settings?.promoBannerUrl ? (
-          <div className="w-full aspect-[2.2/1] sm:aspect-[2.8/1] rounded-3xl overflow-hidden shadow-sm border border-gray-100 group bg-gray-100">
+          <div className="w-full aspect-[2/1] rounded-3xl overflow-hidden shadow-sm border border-gray-100 group bg-white flex items-center justify-center">
             <img
               src={settings.promoBannerUrl}
               alt="Banner Promocional"
-              className="w-full h-full object-cover transition duration-300 group-hover:scale-[1.01]"
+              className="w-full h-full object-contain transition duration-300 group-hover:scale-[1.01]"
             />
           </div>
         ) : (
