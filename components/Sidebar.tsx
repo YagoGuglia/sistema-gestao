@@ -15,7 +15,8 @@ import {
   Building2,
   Wallet,
   Star,
-  UsersRound
+  UsersRound,
+  ExternalLink
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,12 @@ const menuItems = [
   { name: "Configurações", href: "/admin/config", icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  tenantSlug?: string;
+  storeName?: string;
+}
+
+export function Sidebar({ tenantSlug, storeName }: SidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -57,19 +63,33 @@ export function Sidebar() {
       {/* Header Mobile Fixo */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div className="flex items-center justify-between px-4 h-14">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/admin" className="flex items-center gap-2">
             <div className="w-7 h-7 bg-vitrinia-purple rounded-lg flex items-center justify-center">
               <span className="text-white font-black text-xs">V</span>
             </div>
             <h1 className="text-lg font-bold text-vitrinia-purple tracking-tight">vitrinia</h1>
           </Link>
-          <button 
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 text-gray-600 hover:bg-gray-100 rounded-xl transition active:scale-95"
-            aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
-          >
-            {isOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          <div className="flex items-center gap-2">
+            {tenantSlug && (
+              <a
+                href={`/loja/${tenantSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-purple-50 text-vitrinia-purple hover:bg-purple-100 rounded-xl text-xs font-bold transition border border-purple-100"
+                title="Ver Minha Loja"
+              >
+                <ExternalLink size={13} />
+                <span className="text-[11px]">Ver Loja</span>
+              </a>
+            )}
+            <button 
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-xl transition active:scale-95"
+              aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
+            >
+              {isOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -87,9 +107,9 @@ export function Sidebar() {
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full p-6 pt-20 lg:pt-6">
-          {/* Logo - só visível em desktop, no mobile usa o header fixo */}
-          <div className="mb-10 hidden lg:block">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
+          {/* Logo Desktop */}
+          <div className="mb-3 hidden lg:block">
+            <Link href="/admin" className="flex items-center gap-2 hover:opacity-80 transition">
               <div className="w-7 h-7 bg-vitrinia-purple rounded-lg flex items-center justify-center">
                 <span className="text-white font-black text-xs">V</span>
               </div>
@@ -97,6 +117,27 @@ export function Sidebar() {
             </Link>
             <p className="text-xs text-gray-500 font-medium mt-1">Gestão para Pequenos Negócios</p>
           </div>
+
+          {/* Botão Secundário: Ver Minha Loja (Desktop) */}
+          {tenantSlug && (
+            <div className="mb-6 hidden lg:block">
+              <a
+                href={`/loja/${tenantSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between w-full px-3.5 py-2.5 bg-purple-50/80 hover:bg-purple-100 text-vitrinia-purple rounded-xl text-xs font-bold transition border border-purple-100 group shadow-2xs"
+                title="Abrir vitrine da loja em nova aba"
+              >
+                <span className="flex items-center gap-2 truncate">
+                  <ExternalLink size={14} className="text-vitrinia-purple group-hover:scale-110 transition-transform shrink-0" />
+                  <span className="truncate">{storeName || "Ver Minha Loja"}</span>
+                </span>
+                <span className="text-[10px] font-mono text-purple-400 bg-white px-1.5 py-0.5 rounded border border-purple-100 shrink-0">
+                  /loja
+                </span>
+              </a>
+            </div>
+          )}
 
           <nav className="flex-1 space-y-1 overflow-y-auto pr-2 pb-4 -mr-2">
             {menuItems.map((item) => {

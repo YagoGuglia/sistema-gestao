@@ -5,7 +5,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Rotas públicas (vitrine, checkout do cliente, recibo, login, landing page) não chamam Supabase
-  const isProtected = pathname.startsWith('/admin') || pathname.startsWith('/onboarding') || pathname.startsWith('/superadmin')
+  const isProtected = 
+    pathname.startsWith('/admin') || 
+    pathname.startsWith('/onboarding') || 
+    pathname.startsWith('/superadmin') ||
+    pathname.startsWith('/meus-pedidos')
 
   if (!isProtected) {
     return NextResponse.next()

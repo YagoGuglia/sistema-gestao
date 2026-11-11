@@ -20,7 +20,14 @@ export async function GET(request: Request) {
           getAll() { return cookieStore.getAll() },
           setAll(cookiesToSet) {
             try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, {
+                  ...options,
+                  httpOnly: true,
+                  secure: process.env.NODE_ENV === 'production',
+                  sameSite: 'lax',
+                })
+              )
             } catch {}
           },
         },
@@ -72,20 +79,24 @@ export async function GET(request: Request) {
         next = '/superadmin'
       } else if (!dbUser) {
         // Novo usuário (E-mail/Senha ou Google) -> Criar no Prisma
-        // Nota: O tenantId será preenchido no onboarding
         dbUser = await prisma.user.create({
           data: {
             email,
             name,
             phone: data.user.user_metadata?.phone || "",
-            role: 'CUSTOMER' // Role padrão inicial
+            role: plano ? 'TENANT' : 'CUSTOMER'
           }
         })
-        next = `/onboarding${plano ? `?plano=${plano}` : ''}`
+        next = plano ? `/onboarding?plano=${plano}` : '/meus-pedidos'
       } else if (dbUser.role === 'SUPERADMIN') {
         next = '/superadmin'
-      } else if (!dbUser.tenantId) {
-        next = `/onboarding${plano ? `?plano=${plano}` : ''}`
+      } else if (dbUser.role === 'TENANT' || dbUser.tenantId) {
+        next = '/admin'
+      } else if (dbUser.role === 'CUSTOMER') {
+        // Se escolheu um plano explicitamente, permite onboarding para criar loja
+        next = plano ? `/onboarding?plano=${plano}` : '/meus-pedidos'
+      } else {
+        next = '/meus-pedidos'
       }
 
       const forwardedHost = request.headers.get('x-forwarded-host')

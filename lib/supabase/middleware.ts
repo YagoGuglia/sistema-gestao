@@ -20,7 +20,12 @@ export async function updateSession(request: NextRequest) {
             request,
           })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, {
+              ...options,
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'lax',
+            })
           )
         },
       },
@@ -38,12 +43,18 @@ export async function updateSession(request: NextRequest) {
     // Falha silenciosa de conexão ou timeout
   }
 
-  // Se o usuário tentar acessar a área de administração ou onboarding e não estiver logado
-  const isProtected = request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/onboarding')
+  // Se o usuário tentar acessar a área de administração, onboarding ou portal do cliente e não estiver logado
+  const isProtected = 
+    request.nextUrl.pathname.startsWith('/admin') || 
+    request.nextUrl.pathname.startsWith('/onboarding') ||
+    request.nextUrl.pathname.startsWith('/meus-pedidos')
   
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    if (request.nextUrl.pathname.startsWith('/meus-pedidos')) {
+      url.searchParams.set('next', '/meus-pedidos')
+    }
     return NextResponse.redirect(url)
   }
 
