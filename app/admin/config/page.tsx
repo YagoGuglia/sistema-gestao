@@ -33,126 +33,29 @@ export default async function ConfigPage() {
       </header>
 
       <form action={updateGlobalSettings} className="space-y-8">
-        {/* ── MARCA & IDENTIDADE ── */}
+        {/* ── CENTRALIZAÇÃO DA IDENTIDADE VISUAL & MODO DE NEGÓCIO ── */}
         <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-vitrinia-purple/5 to-transparent">
+          <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-vitrinia-purple/5 to-transparent flex items-center justify-between">
             <h2 className="text-sm font-bold text-vitrinia-purple uppercase tracking-wider flex items-center gap-2">
-              <Palette size={16} />
-              Marca & Identidade Visual
+              <Store size={16} />
+              Modo de Operação do Negócio
             </h2>
+            <a
+              href="/admin/empresa"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-vitrinia-purple hover:underline bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-100 transition"
+            >
+              <Palette className="w-3.5 h-3.5" />
+              <span>Personalizar Marca & Vitrine em Minha Empresa →</span>
+            </a>
           </div>
           <div className="p-6 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">Nome da Empresa</label>
-                <input
-                  type="text"
-                  name="companyName"
-                  defaultValue={settings.companyName}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition font-medium"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">Cor Primária da Vitrine</label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    name="primaryColor"
-                    defaultValue={settings.primaryColor}
-                    className="w-12 h-12 rounded-xl border border-gray-200 cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    defaultValue={settings.primaryColor}
-                    className="flex-1 p-3 border border-gray-200 rounded-xl font-mono text-sm text-gray-600"
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-bold text-gray-700">Logo da Loja (URL)</label>
-                  <a href="/admin/empresa" className="text-[11px] font-bold text-vitrinia-purple hover:underline">
-                    Fazer Upload no Painel →
-                  </a>
-                </div>
-                <input
-                  type="url"
-                  name="companyLogoUrl"
-                  defaultValue={settings.logoUrl || settings.companyLogoUrl || ""}
-                  placeholder="https://..."
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">Banner de Capa (URL)</label>
-                <input
-                  type="url"
-                  name="bannerUrl"
-                  defaultValue={settings.bannerUrl || ""}
-                  placeholder="https://..."
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-bold text-gray-700">Superbanner (Banner de Cabeçalho)</label>
-                  <a href="/admin/empresa" className="text-[11px] font-bold text-vitrinia-purple hover:underline">
-                    Upload →
-                  </a>
-                </div>
-                <input
-                  type="url"
-                  name="superBannerUrl"
-                  defaultValue={settings.superBannerUrl || settings.bannerUrl || ""}
-                  placeholder="https://..."
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-bold text-gray-700">Banner de Promoção (Acima dos Produtos)</label>
-                  <a href="/admin/empresa" className="text-[11px] font-bold text-vitrinia-purple hover:underline">
-                    Upload →
-                  </a>
-                </div>
-                <input
-                  type="url"
-                  name="promoBannerUrl"
-                  defaultValue={settings.promoBannerUrl || ""}
-                  placeholder="https://..."
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">Fonte da Loja (Tipografia)</label>
-                <select
-                  name="storeFontFamily"
-                  defaultValue={settings.storeFontFamily || "Inter"}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm font-medium bg-white"
-                >
-                  <option value="Inter">Inter (Moderna & Padrão)</option>
-                  <option value="Playfair Display">Playfair Display (Elegante com Serifa)</option>
-                  <option value="Roboto">Roboto (Neutra & Versátil)</option>
-                  <option value="Montserrat">Montserrat (Geométrica & Marcante)</option>
-                  <option value="Poppins">Poppins (Amigável & Arredondada)</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">Frase de Efeito / Slogan (Máx 45 chars)</label>
-                <input
-                  type="text"
-                  name="storeSlogan"
-                  maxLength={45}
-                  defaultValue={settings.storeSlogan || "O SEU PEDIDO EM UM CLIQUE"}
-                  placeholder="Ex: O seu presente está aqui"
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
-                />
+            <div className="bg-purple-50/60 rounded-xl p-4 border border-purple-100 flex items-start gap-3">
+              <Palette className="w-5 h-5 text-vitrinia-purple shrink-0 mt-0.5" />
+              <div className="text-xs text-purple-900 leading-relaxed">
+                <strong>Identidade Visual Centralizada:</strong> O envio de logo, superbanners, banner de ofertas, cores da loja, tipografia e slogan da vitrine foram centralizados com <em>Live Preview</em> em tempo real na página{" "}
+                <a href="/admin/empresa" className="font-bold underline text-vitrinia-purple">
+                  Minha Empresa
+                </a>.
               </div>
             </div>
 

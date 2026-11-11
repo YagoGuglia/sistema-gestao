@@ -15,6 +15,8 @@ interface StoreHeaderProps {
   bannerOpacity?: number;
   useSolidColorForHeader?: boolean;
   primaryColor?: string;
+  nameColor?: string;
+  sloganColor?: string;
   isOpen?: boolean;
   whatsappNumber?: string | null;
 }
@@ -29,6 +31,8 @@ export function StoreHeader({
   bannerOpacity = 1.0,
   useSolidColorForHeader = false,
   primaryColor = "#7C3AED",
+  nameColor = "#FFFFFF",
+  sloganColor = "#FFFFFF",
   isOpen = true,
   whatsappNumber,
 }: StoreHeaderProps) {
@@ -161,14 +165,20 @@ export function StoreHeader({
 
           {/* Nome da Loja com Tipografia Personalizada */}
           <h1 
-            className="mt-3 text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight drop-shadow-sm"
-            style={{ fontFamily: fontFamily ? `"${fontFamily}", sans-serif` : "inherit" }}
+            className="mt-3 text-xl sm:text-2xl lg:text-3xl font-black tracking-tight drop-shadow-sm"
+            style={{ 
+              fontFamily: fontFamily ? `"${fontFamily}", sans-serif` : "inherit",
+              color: nameColor,
+            }}
           >
             {storeName}
           </h1>
 
           {/* Frase de Efeito / Slogan Customizado (máx 45 caracteres) */}
-          <p className="text-xs sm:text-sm text-white/95 font-medium tracking-wide uppercase mt-1 drop-shadow-xs max-w-md truncate px-2">
+          <p 
+            className="text-xs sm:text-sm font-medium tracking-wide uppercase mt-1 drop-shadow-xs max-w-md truncate px-2"
+            style={{ color: sloganColor }}
+          >
             {slogan || "O SEU PEDIDO EM UM CLIQUE"}
           </p>
 

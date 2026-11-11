@@ -230,6 +230,8 @@ model GlobalSettings {
   storeSlogan            String? @default("O SEU PEDIDO EM UM CLIQUE")
   bannerOpacity          Float   @default(1.0)
   useSolidColorForHeader Boolean @default(false)
+  storeNameColor         String? @default("#FFFFFF")
+  storeSloganColor       String? @default("#FFFFFF")
   // Tipo de negócio (usado para habilitar / desabilitar recursos)
   businessType   BusinessType @default(BOTH)
 

@@ -15,6 +15,8 @@ const VisualSettingsSchema = z.object({
   bannerOpacity: z.number().min(0.1).max(1.0).default(1.0),
   useSolidColorForHeader: z.boolean().default(false),
   primaryColor: z.string().default("#7C3AED"),
+  storeNameColor: z.string().optional(),
+  storeSloganColor: z.string().optional(),
 });
 
 export async function updateStoreVisualSettings(formData: FormData): Promise<{ success: boolean; error?: string }> {
@@ -27,6 +29,8 @@ export async function updateStoreVisualSettings(formData: FormData): Promise<{ s
       bannerOpacity: parseFloat(formData.get("bannerOpacity") as string) || 1.0,
       useSolidColorForHeader: formData.get("useSolidColorForHeader") === "true" || formData.get("useSolidColorForHeader") === "on",
       primaryColor: (formData.get("primaryColor") as string) || "#7C3AED",
+      storeNameColor: (formData.get("storeNameColor") as string) || "#FFFFFF",
+      storeSloganColor: (formData.get("storeSloganColor") as string) || "#FFFFFF",
     };
 
     const parsed = VisualSettingsSchema.safeParse(rawData);
@@ -42,6 +46,8 @@ export async function updateStoreVisualSettings(formData: FormData): Promise<{ s
         bannerOpacity: parsed.data.bannerOpacity,
         useSolidColorForHeader: parsed.data.useSolidColorForHeader,
         primaryColor: parsed.data.primaryColor,
+        storeNameColor: parsed.data.storeNameColor,
+        storeSloganColor: parsed.data.storeSloganColor,
       },
     });
 
@@ -176,54 +182,54 @@ export async function updateGlobalSettings(formData: FormData) {
   const notificationAudioInterval = parseInt(formData.get("notificationAudioInterval") as string) || 0;
   const whatsappTemplates = formData.get("whatsappTemplates") as string || null;
 
+  // Construção segura dos dados para não sobrescrever configurações visuais mantidas em /admin/empresa
+  const dataToUpdate: any = {
+    // Legacy & Geral
+    defaultMinStock,
+    decimalSeparator,
+    defaultDeliveryFee,
+    businessType: (businessType || "BOTH") as any,
+    // Horários
+    openingTime,
+    closingTime,
+    workDays,
+    operatingHours,
+    // Agendamento
+    defaultSchedulingEnabled,
+    schedulingAppliesTo,
+    deliverySchedulingEnabled,
+    slotIntervalMin,
+    depositType,
+    depositPercentage,
+    cancellationHoursLimit,
+    schedulingDays,
+    schedulingStartTime,
+    schedulingEndTime,
+    schedulingPeriod,
+    // Comissões
+    enableCommissions,
+    // Gateway & Integrações
+    gatewayProvider: gatewayProvider ? (gatewayProvider as any) : null,
+    gatewayAccessToken,
+    pixKey,
+    whatsappNumber,
+    autoWhatsappEnabled,
+    notificationAudioInterval,
+    whatsappTemplates,
+  };
+
+  // Se vier companyName no formData, atualiza
+  if (formData.has("companyName") && formData.get("companyName")) {
+    dataToUpdate.companyName = formData.get("companyName") as string;
+  }
+  // Se vier primaryColor no formData, atualiza
+  if (formData.has("primaryColor") && formData.get("primaryColor")) {
+    dataToUpdate.primaryColor = formData.get("primaryColor") as string;
+  }
+
   await prisma.globalSettings.update({
     where: { tenantId },
-    data: {
-      // Legacy
-      defaultMinStock,
-      decimalSeparator,
-      defaultDeliveryFee,
-      // Marca
-      companyName,
-      companyLogoUrl,
-      logoUrl,
-      bannerUrl,
-      superBannerUrl,
-      promoBannerUrl,
-      primaryColor,
-      storeFontFamily,
-      storeSlogan,
-      bannerOpacity,
-      useSolidColorForHeader,
-      businessType: (businessType || "BOTH") as any,
-      // Horários
-      openingTime,
-      closingTime,
-      workDays,
-      operatingHours,
-      // Agendamento
-      defaultSchedulingEnabled,
-      schedulingAppliesTo,
-      deliverySchedulingEnabled,
-      slotIntervalMin,
-      depositType,
-      depositPercentage,
-      cancellationHoursLimit,
-      schedulingDays,
-      schedulingStartTime,
-      schedulingEndTime,
-      schedulingPeriod,
-      // Comissões
-      enableCommissions,
-      // Gateway
-      gatewayProvider: gatewayProvider ? (gatewayProvider as any) : null,
-      gatewayAccessToken,
-      pixKey,
-      whatsappNumber,
-      autoWhatsappEnabled,
-      notificationAudioInterval,
-      whatsappTemplates,
-    }
+    data: dataToUpdate,
   });
 
   revalidatePath("/admin/config");

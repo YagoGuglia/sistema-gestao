@@ -46,6 +46,8 @@ interface Props {
     storeSlogan?: string | null;
     bannerOpacity?: number;
     useSolidColorForHeader?: boolean;
+    storeNameColor?: string | null;
+    storeSloganColor?: string | null;
     businessType?: string;
     openingTime?: string;
     closingTime?: string;
@@ -97,6 +99,12 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
   const [primaryColor, setPrimaryColor] = useState<string>(
     settings.primaryColor || "#7C3AED"
   );
+  const [nameColor, setNameColor] = useState<string>(
+    settings.storeNameColor || "#FFFFFF"
+  );
+  const [sloganColor, setSloganColor] = useState<string>(
+    settings.storeSloganColor || "#FFFFFF"
+  );
 
   const [savingVisuals, setSavingVisuals] = useState(false);
   const [visualSuccess, setVisualSuccess] = useState(false);
@@ -114,6 +122,8 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
     formData.append("bannerOpacity", bannerOpacity.toString());
     formData.append("useSolidColorForHeader", useSolidColor ? "true" : "false");
     formData.append("primaryColor", primaryColor);
+    formData.append("storeNameColor", nameColor);
+    formData.append("storeSloganColor", sloganColor);
 
     try {
       const res = await updateStoreVisualSettings(formData);
@@ -388,6 +398,55 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
               </p>
             </div>
           </div>
+
+          {/* Cores de Tipografia (Nome da Loja e Slogan) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+            {/* Cor do Nome */}
+            <div className="space-y-1.5 p-3 rounded-xl border border-gray-100 bg-gray-50/50">
+              <label className="block text-xs font-bold text-gray-800">
+                Cor do Nome da Loja
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={nameColor}
+                  onChange={(e) => setNameColor(e.target.value)}
+                  className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent p-0"
+                  title="Escolha a cor do nome da loja"
+                />
+                <input
+                  type="text"
+                  value={nameColor}
+                  onChange={(e) => setNameColor(e.target.value)}
+                  className="p-1.5 bg-white border border-gray-200 rounded-lg text-xs font-mono text-gray-700 w-24 text-center uppercase"
+                />
+                <span className="text-[11px] text-gray-400">Nome</span>
+              </div>
+            </div>
+
+            {/* Cor do Slogan */}
+            <div className="space-y-1.5 p-3 rounded-xl border border-gray-100 bg-gray-50/50">
+              <label className="block text-xs font-bold text-gray-800">
+                Cor do Slogan / Frase de Efeito
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={sloganColor}
+                  onChange={(e) => setSloganColor(e.target.value)}
+                  className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent p-0"
+                  title="Escolha a cor do slogan"
+                />
+                <input
+                  type="text"
+                  value={sloganColor}
+                  onChange={(e) => setSloganColor(e.target.value)}
+                  className="p-1.5 bg-white border border-gray-200 rounded-lg text-xs font-mono text-gray-700 w-24 text-center uppercase"
+                />
+                <span className="text-[11px] text-gray-400">Slogan</span>
+              </div>
+            </div>
+          </div>
         </form>
 
         {/* Bloco 3: Live Preview em Tempo Real */}
@@ -443,13 +502,19 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
                 </div>
 
                 <h3 
-                  className="text-white font-black text-lg sm:text-xl mt-2 drop-shadow-sm tracking-tight transition-all"
-                  style={{ fontFamily: fontFamily ? `"${fontFamily}", sans-serif` : "inherit" }}
+                  className="font-black text-lg sm:text-xl mt-2 drop-shadow-sm tracking-tight transition-all"
+                  style={{ 
+                    fontFamily: fontFamily ? `"${fontFamily}", sans-serif` : "inherit",
+                    color: nameColor,
+                  }}
                 >
                   {settings.companyName}
                 </h3>
 
-                <p className="text-[11px] sm:text-xs text-white/95 font-medium tracking-wide uppercase mt-0.5 drop-shadow-xs max-w-sm truncate px-2">
+                <p 
+                  className="text-[11px] sm:text-xs font-medium tracking-wide uppercase mt-0.5 drop-shadow-xs max-w-sm truncate px-2"
+                  style={{ color: sloganColor }}
+                >
                   {slogan || "O SEU PEDIDO EM UM CLIQUE"}
                 </p>
               </div>

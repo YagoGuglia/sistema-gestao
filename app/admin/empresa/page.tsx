@@ -31,6 +31,8 @@ export default async function EmpresaPage() {
         storeSlogan: settings?.storeSlogan || "O SEU PEDIDO EM UM CLIQUE",
         bannerOpacity: settings?.bannerOpacity ?? 1.0,
         useSolidColorForHeader: settings?.useSolidColorForHeader ?? false,
+        storeNameColor: settings?.storeNameColor || "#FFFFFF",
+        storeSloganColor: settings?.storeSloganColor || "#FFFFFF",
         businessType: settings?.businessType || "BOTH",
         openingTime: settings?.openingTime || "08:00",
         closingTime: settings?.closingTime || "18:00",

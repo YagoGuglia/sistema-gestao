@@ -21,6 +21,8 @@ export interface TenantWithSettings {
     storeSlogan?: string | null;
     bannerOpacity?: number | null;
     useSolidColorForHeader?: boolean | null;
+    storeNameColor?: string | null;
+    storeSloganColor?: string | null;
     businessType: "PRODUCTS" | "SERVICES" | "BOTH";
     openingTime: string | null;
     closingTime: string | null;

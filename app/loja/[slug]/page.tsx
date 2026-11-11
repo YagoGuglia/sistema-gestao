@@ -77,6 +77,8 @@ export default async function StorefrontPage({ params }: { params: Promise<{ slu
         bannerOpacity={tenant.settings?.bannerOpacity ?? 1.0}
         useSolidColorForHeader={tenant.settings?.useSolidColorForHeader ?? false}
         primaryColor={primaryColor}
+        nameColor={tenant.settings?.storeNameColor || "#FFFFFF"}
+        sloganColor={tenant.settings?.storeSloganColor || "#FFFFFF"}
         isOpen={(tenant.settings as any)?.isStoreOpen ?? true}
         whatsappNumber={tenant.settings?.whatsappNumber}
       />
