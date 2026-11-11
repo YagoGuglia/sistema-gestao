@@ -111,7 +111,7 @@ export default async function Dashboard() {
               asModal
               slug={tenant.slug}
               storeName={settings.companyName || tenant.name}
-              logoUrl={settings.companyLogoUrl}
+              logoUrl={settings.logoUrl || settings.companyLogoUrl}
             />
           )}
         </div>

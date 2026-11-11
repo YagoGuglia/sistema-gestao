@@ -221,7 +221,10 @@ model GlobalSettings {
   // Identidade & Marca
   companyName    String  @default("Minha Loja")
   companyLogoUrl String?
+  logoUrl        String?
   bannerUrl      String?
+  superBannerUrl String?
+  promoBannerUrl String?
   primaryColor   String  @default("#7C3AED")
   // Tipo de negócio (usado para habilitar / desabilitar recursos)
   businessType   BusinessType @default(BOTH)

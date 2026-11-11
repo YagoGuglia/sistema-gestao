@@ -73,21 +73,56 @@ export default async function ConfigPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">URL do Logo</label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-bold text-gray-700">Logo da Loja (URL)</label>
+                  <a href="/admin/empresa" className="text-[11px] font-bold text-vitrinia-purple hover:underline">
+                    Fazer Upload no Painel →
+                  </a>
+                </div>
                 <input
                   type="url"
                   name="companyLogoUrl"
-                  defaultValue={settings.companyLogoUrl || ""}
+                  defaultValue={settings.logoUrl || settings.companyLogoUrl || ""}
                   placeholder="https://..."
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700">URL do Banner</label>
+                <label className="block text-sm font-bold text-gray-700">Banner de Capa (URL)</label>
                 <input
                   type="url"
                   name="bannerUrl"
                   defaultValue={settings.bannerUrl || ""}
+                  placeholder="https://..."
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-bold text-gray-700">Superbanner Principal (URL)</label>
+                  <a href="/admin/empresa" className="text-[11px] font-bold text-vitrinia-purple hover:underline">
+                    Upload →
+                  </a>
+                </div>
+                <input
+                  type="url"
+                  name="superBannerUrl"
+                  defaultValue={settings.superBannerUrl || ""}
+                  placeholder="https://..."
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-bold text-gray-700">Banner de Promoção (URL)</label>
+                  <a href="/admin/empresa" className="text-[11px] font-bold text-vitrinia-purple hover:underline">
+                    Upload →
+                  </a>
+                </div>
+                <input
+                  type="url"
+                  name="promoBannerUrl"
+                  defaultValue={settings.promoBannerUrl || ""}
                   placeholder="https://..."
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
                 />

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Store, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Eye, Clock, Sparkles, ExternalLink, Palette, CheckCircle2 } from "lucide-react";
+import { Store, Tag, Plus, Trash2, ToggleLeft, ToggleRight, Eye, ExternalLink, Image as ImageIcon, Sparkles } from "lucide-react";
 import { createCoupon, toggleCoupon, deleteCoupon } from "@/app/actions/coupon-actions";
 import { StoreShareModal } from "@/components/admin/StoreShareModal";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface Coupon {
   id: string;
@@ -19,7 +20,10 @@ interface Props {
   settings: {
     companyName: string;
     companyLogoUrl: string | null;
+    logoUrl?: string | null;
     bannerUrl?: string | null;
+    superBannerUrl?: string | null;
+    promoBannerUrl?: string | null;
     primaryColor?: string;
     businessType?: string;
     openingTime?: string;
@@ -37,6 +41,17 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [formError, setFormError] = useState("");
+
+  // Estados locais reativos para refletir as imagens instantaneamente no preview
+  const [logoUrl, setLogoUrl] = useState<string | null>(
+    settings.logoUrl || settings.companyLogoUrl || null
+  );
+  const [superBannerUrl, setSuperBannerUrl] = useState<string | null>(
+    settings.superBannerUrl || null
+  );
+  const [promoBannerUrl, setPromoBannerUrl] = useState<string | null>(
+    settings.promoBannerUrl || null
+  );
 
   const handleCreateCoupon = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -64,23 +79,80 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
     <div className="p-6 space-y-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Minha Empresa</h1>
-        <p className="text-gray-500 text-sm mt-1">Informações da sua loja e configurações públicas.</p>
+        <p className="text-gray-500 text-sm mt-1">Informações da sua loja, identidade visual e banners da vitrine.</p>
       </div>
 
       {/* Info da Loja */}
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-vitrinia-purple/10 rounded-2xl flex items-center justify-center">
-            {settings.companyLogoUrl
-              ? <img src={settings.companyLogoUrl} className="w-full h-full object-cover rounded-2xl" alt="Logo" />
-              : <Store className="w-8 h-8 text-vitrinia-purple" />}
+          <div className="w-16 h-16 bg-vitrinia-purple/10 rounded-2xl flex items-center justify-center overflow-hidden border border-gray-100">
+            {logoUrl ? (
+              <img src={logoUrl} className="w-full h-full object-cover rounded-2xl" alt="Logo" />
+            ) : (
+              <Store className="w-8 h-8 text-vitrinia-purple" />
+            )}
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900">{settings.companyName}</h2>
-            <span className={`text-xs font-bold px-2 py-1 rounded-full ${tenant.plan === 'PRO' || tenant.plan === 'pro' ? 'bg-purple-100 text-purple-700 font-extrabold border border-purple-200' : 'bg-gray-100 text-gray-500'}`}>
-              Plano {tenant.plan.toUpperCase()}
-            </span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${tenant.plan === 'PRO' || tenant.plan === 'pro' ? 'bg-purple-100 text-purple-700 font-extrabold border border-purple-200' : 'bg-gray-100 text-gray-500'}`}>
+                Plano {tenant.plan.toUpperCase()}
+              </span>
+              <span className="text-xs text-gray-400 font-mono">/loja/{tenant.slug}</span>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Upload de Banners e Logo (Supabase Storage) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-vitrinia-purple" />
+              Identidade Visual & Banners da Vitrine
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Envie suas imagens para personalizar a vitrine pública e seus comprovantes térmicos.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5">
+          {/* 1. Logo da Loja */}
+          <ImageUploader
+            type="logo"
+            label="1. Logo da Loja"
+            description="Exibida no topo da vitrine pública e no topo do comprovante térmico POS58."
+            recommendation="Formato quadrado (PNG/JPG), mín. 400x400px"
+            initialUrl={logoUrl}
+            onUploaded={(url) => setLogoUrl(url)}
+            onRemoved={() => setLogoUrl(null)}
+          />
+
+          {/* 2. Superbanner */}
+          <ImageUploader
+            type="superBanner"
+            label="2. Superbanner (Destaque Principal)"
+            description="Banner grande e horizontal posicionado com destaque logo abaixo do cabeçalho da loja."
+            recommendation="1200x400px ou proporção 3:1 (máx. 5MB)"
+            aspectRatioClass="aspect-[3/1]"
+            initialUrl={superBannerUrl}
+            onUploaded={(url) => setSuperBannerUrl(url)}
+            onRemoved={() => setSuperBannerUrl(null)}
+          />
+
+          {/* 3. Banner de Promoção */}
+          <ImageUploader
+            type="promoBanner"
+            label="3. Banner de Promoção (Ofertas & Destaques)"
+            description="Banner secundário / card de destaque exibido estrategicamente acima da listagem de produtos."
+            recommendation="800x350px ou proporção 2:1 (máx. 5MB)"
+            aspectRatioClass="aspect-[2.4/1]"
+            initialUrl={promoBannerUrl}
+            onUploaded={(url) => setPromoBannerUrl(url)}
+            onRemoved={() => setPromoBannerUrl(null)}
+          />
         </div>
       </div>
 
@@ -89,7 +161,7 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-gray-900 font-bold">
             <Eye className="w-5 h-5 text-vitrinia-purple" />
-            <h2 className="text-lg">Preview da Loja (Como o cliente enxerga)</h2>
+            <h2 className="text-lg">Preview da Vitrine em Tempo Real</h2>
           </div>
           <a
             href={`/loja/${tenant.slug}`}
@@ -97,34 +169,31 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-vitrinia-purple hover:underline bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-100"
           >
-            Abrir Vitrine
+            Abrir Vitrine Real
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
 
         {/* Mockup do Topo da Vitrine */}
         <div className="rounded-2xl border border-gray-200 overflow-hidden bg-gray-50 shadow-inner">
-          {/* Banner */}
+          {/* Header Bar */}
           <div
-            className="h-28 w-full bg-cover bg-center relative flex items-center justify-center"
+            className="h-20 w-full relative flex items-center justify-center transition-colors"
             style={{
               backgroundColor: settings.primaryColor || "#7C3AED",
-              backgroundImage: settings.bannerUrl ? `url(${settings.bannerUrl})` : undefined,
             }}
           >
-            {!settings.bannerUrl && (
-              <span className="text-white/80 font-bold text-xs uppercase tracking-widest">
-                Cor Primária Configurada ({settings.primaryColor})
-              </span>
-            )}
+            <div className="text-white/80 font-bold text-xs uppercase tracking-widest">
+              Cabeçalho ({settings.companyName})
+            </div>
           </div>
 
-          {/* Dados Resumidos */}
-          <div className="p-4 bg-white space-y-3">
+          {/* Dados Resumidos e Avatar */}
+          <div className="p-4 bg-white space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl border border-gray-100 overflow-hidden bg-gray-50 -mt-8 shadow-md shrink-0 flex items-center justify-center">
-                {settings.companyLogoUrl ? (
-                  <img src={settings.companyLogoUrl} alt="Logo" className="w-full h-full object-cover" />
+              <div className="w-14 h-14 rounded-2xl border-2 border-white overflow-hidden bg-white -mt-10 shadow-md shrink-0 flex items-center justify-center">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
                 ) : (
                   <Store className="w-6 h-6 text-gray-400" />
                 )}
@@ -133,6 +202,40 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
                 <p className="font-bold text-gray-900 text-sm">{settings.companyName}</p>
                 <p className="text-[11px] text-gray-400 font-mono">/loja/{tenant.slug}</p>
               </div>
+            </div>
+
+            {/* Mockup do Superbanner */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                Visualização do Superbanner
+              </span>
+              {superBannerUrl ? (
+                <div className="w-full aspect-[3/1] rounded-xl overflow-hidden border border-gray-200 shadow-xs">
+                  <img src={superBannerUrl} alt="Superbanner" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-full py-4 px-3 rounded-xl border border-dashed border-purple-200 bg-purple-50/50 text-center">
+                  <p className="text-xs font-semibold text-purple-700">Placeholder elegante do Superbanner ativo</p>
+                  <p className="text-[10px] text-purple-400 mt-0.5">Faça o upload acima para substituir por sua arte personalizada</p>
+                </div>
+              )}
+            </div>
+
+            {/* Mockup do Promo Banner */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                Visualização do Banner de Promoção
+              </span>
+              {promoBannerUrl ? (
+                <div className="w-full aspect-[2.4/1] rounded-xl overflow-hidden border border-gray-200 shadow-xs">
+                  <img src={promoBannerUrl} alt="Banner de Promoção" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-full py-3 px-3 rounded-xl border border-dashed border-orange-200 bg-orange-50/50 text-center">
+                  <p className="text-xs font-semibold text-orange-700">Placeholder elegante de Ofertas ativo</p>
+                  <p className="text-[10px] text-orange-400 mt-0.5">Banner secundário exibido no topo da listagem de produtos</p>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-gray-100 text-xs">
@@ -166,7 +269,7 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
         <StoreShareModal
           slug={tenant.slug}
           storeName={settings.companyName}
-          logoUrl={settings.companyLogoUrl}
+          logoUrl={logoUrl}
         />
       </div>
 

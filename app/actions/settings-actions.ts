@@ -80,8 +80,12 @@ export async function updateGlobalSettings(formData: FormData) {
 
   // Marca & Identidade
   const companyName = (formData.get("companyName") as string) || "Minha Loja";
-  const companyLogoUrl = formData.get("companyLogoUrl") as string || null;
+  const rawLogo = (formData.get("logoUrl") as string) || (formData.get("companyLogoUrl") as string) || null;
+  const companyLogoUrl = rawLogo;
+  const logoUrl = rawLogo;
   const bannerUrl = formData.get("bannerUrl") as string || null;
+  const superBannerUrl = formData.get("superBannerUrl") as string || null;
+  const promoBannerUrl = formData.get("promoBannerUrl") as string || null;
   const primaryColor = (formData.get("primaryColor") as string) || "#7C3AED";
   const businessType = (formData.get("businessType") as string) || "BOTH";
 
@@ -126,7 +130,10 @@ export async function updateGlobalSettings(formData: FormData) {
       // Marca
       companyName,
       companyLogoUrl,
+      logoUrl,
       bannerUrl,
+      superBannerUrl,
+      promoBannerUrl,
       primaryColor,
       businessType: (businessType || "BOTH") as any,
       // Horários

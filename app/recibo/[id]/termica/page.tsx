@@ -36,6 +36,8 @@ export default async function ThermalReceiptPage({
           settings: {
             select: {
               companyName: true,
+              companyLogoUrl: true,
+              logoUrl: true,
               whatsappNumber: true,
             },
           },

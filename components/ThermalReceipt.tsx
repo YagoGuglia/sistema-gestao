@@ -40,6 +40,8 @@ export interface ThermalReceiptProps {
       name: string;
       settings?: {
         companyName?: string;
+        companyLogoUrl?: string | null;
+        logoUrl?: string | null;
         whatsappNumber?: string | null;
       } | null;
     };
@@ -148,6 +150,15 @@ export function ThermalReceipt({ order, autoPrint = false }: ThermalReceiptProps
 
         {/* Cabeçalho Térmico */}
         <div className="text-center pb-1 border-b border-black border-dashed">
+          {(order.tenant.settings?.logoUrl || order.tenant.settings?.companyLogoUrl) && (
+            <div className="flex justify-center mb-1.5">
+              <img
+                src={order.tenant.settings.logoUrl || order.tenant.settings.companyLogoUrl || ""}
+                alt="Logo da Loja"
+                className="max-h-12 max-w-[120px] object-contain filter grayscale contrast-150"
+              />
+            </div>
+          )}
           <p className="font-bold text-[12px] uppercase tracking-tighter truncate">
             {companyName}
           </p>

@@ -21,8 +21,11 @@ export default async function EmpresaPage() {
       tenant={{ id: tenant.id, name: tenant.name, slug: tenant.slug, plan: tenant.plan, status: tenant.status }}
       settings={{
         companyName: settings?.companyName || tenant.name,
-        companyLogoUrl: settings?.companyLogoUrl || null,
+        companyLogoUrl: settings?.logoUrl || settings?.companyLogoUrl || null,
+        logoUrl: settings?.logoUrl || settings?.companyLogoUrl || null,
         bannerUrl: settings?.bannerUrl || null,
+        superBannerUrl: settings?.superBannerUrl || null,
+        promoBannerUrl: settings?.promoBannerUrl || null,
         primaryColor: settings?.primaryColor || "#7C3AED",
         businessType: settings?.businessType || "BOTH",
         openingTime: settings?.openingTime || "08:00",

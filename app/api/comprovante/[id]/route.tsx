@@ -34,7 +34,7 @@ export async function GET(
     });
 
     const companyName = settings?.companyName || 'Minha Loja';
-    const companyLogo = settings?.companyLogoUrl || null;
+    const companyLogo = settings?.logoUrl || settings?.companyLogoUrl || null;
 
     return new ImageResponse(
       (

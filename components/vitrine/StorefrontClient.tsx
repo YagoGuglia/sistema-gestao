@@ -47,7 +47,39 @@ export function StorefrontClient({
   const services = products.filter(p => p.isService);
 
   return (
-    <div className="px-4 mt-8 pb-8 max-w-3xl mx-auto space-y-12">
+    <div className="px-4 mt-8 pb-8 max-w-3xl mx-auto space-y-10">
+      {/* BANNER DE PROMOÇÃO / DESTAQUE */}
+      <section>
+        {settings?.promoBannerUrl ? (
+          <div className="w-full aspect-[2.4/1] sm:aspect-[3/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs border border-gray-100 group bg-gray-100">
+            <img
+              src={settings.promoBannerUrl}
+              alt="Promoções da Loja"
+              className="w-full h-full object-cover transition duration-300 group-hover:scale-[1.01]"
+            />
+          </div>
+        ) : (
+          <div className="w-full p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-purple-500/10 border border-orange-200/50 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-vitrinia-orange/15 text-vitrinia-orange flex items-center justify-center text-xl shrink-0">
+                🔥
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-vitrinia-orange text-white">
+                    Ofertas & Destaques
+                  </span>
+                  <span className="text-xs font-bold text-gray-800">Peça online com facilidade</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Explore nossas novidades e adicione seus itens favoritos diretamente na sacola!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* SEÇÃO DE PRODUTOS */}
       {(businessType === "BOTH" || businessType === "PRODUCTS") && (
         <section>

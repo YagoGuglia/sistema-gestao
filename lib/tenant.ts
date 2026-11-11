@@ -13,7 +13,10 @@ export interface TenantWithSettings {
     primaryColor: string;
     companyName: string;
     companyLogoUrl: string | null;
+    logoUrl?: string | null;
     bannerUrl: string | null;
+    superBannerUrl?: string | null;
+    promoBannerUrl?: string | null;
     businessType: "PRODUCTS" | "SERVICES" | "BOTH";
     openingTime: string | null;
     closingTime: string | null;
