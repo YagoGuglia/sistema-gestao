@@ -90,12 +90,11 @@ export async function uploadStoreAsset(formData: FormData): Promise<{ success: b
     if (type === "logo") {
       updateData.logoUrl = publicUrl;
       updateData.companyLogoUrl = publicUrl;
-    } else if (type === "superBanner") {
+    } else if (type === "superBanner" || type === "banner") {
       updateData.superBannerUrl = publicUrl;
+      updateData.bannerUrl = publicUrl;
     } else if (type === "promoBanner") {
       updateData.promoBannerUrl = publicUrl;
-    } else if (type === "banner") {
-      updateData.bannerUrl = publicUrl;
     }
 
     await prisma.globalSettings.upsert({
@@ -138,12 +137,11 @@ export async function removeStoreAsset(type: AssetType): Promise<{ success: bool
     if (type === "logo") {
       updateData.logoUrl = null;
       updateData.companyLogoUrl = null;
-    } else if (type === "superBanner") {
+    } else if (type === "superBanner" || type === "banner") {
       updateData.superBannerUrl = null;
+      updateData.bannerUrl = null;
     } else if (type === "promoBanner") {
       updateData.promoBannerUrl = null;
-    } else if (type === "banner") {
-      updateData.bannerUrl = null;
     }
 
     await prisma.globalSettings.update({

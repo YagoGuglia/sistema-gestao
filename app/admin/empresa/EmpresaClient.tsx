@@ -119,36 +119,36 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
         </div>
 
         <div className="grid grid-cols-1 gap-5">
-          {/* 1. Logo da Loja */}
+          {/* 1. Logo da Empresa */}
           <ImageUploader
             type="logo"
-            label="1. Logo da Loja"
-            description="Exibida no topo da vitrine pública e no topo do comprovante térmico POS58."
+            label="1. Logo da Empresa"
+            description="Exibida no cabeçalho da vitrine e no topo do comprovante térmico POS58."
             recommendation="Formato quadrado (PNG/JPG), mín. 400x400px"
             initialUrl={logoUrl}
             onUploaded={(url) => setLogoUrl(url)}
             onRemoved={() => setLogoUrl(null)}
           />
 
-          {/* 2. Superbanner */}
+          {/* 2. Superbanner (Banner de Cabeçalho) */}
           <ImageUploader
             type="superBanner"
-            label="2. Superbanner (Destaque Principal)"
-            description="Banner grande e horizontal posicionado com destaque logo abaixo do cabeçalho da loja."
-            recommendation="1200x400px ou proporção 3:1 (máx. 5MB)"
-            aspectRatioClass="aspect-[3/1]"
+            label="2. Superbanner (Banner de Cabeçalho)"
+            description="Banner de fundo disposto no cabeçalho da loja, atrás do logo e nome."
+            recommendation="1200x500px ou proporção horizontal (máx. 5MB)"
+            aspectRatioClass="aspect-[2.8/1]"
             initialUrl={superBannerUrl}
             onUploaded={(url) => setSuperBannerUrl(url)}
             onRemoved={() => setSuperBannerUrl(null)}
           />
 
-          {/* 3. Banner de Promoção */}
+          {/* 3. Banner de Promoção (Acima dos Produtos) */}
           <ImageUploader
             type="promoBanner"
-            label="3. Banner de Promoção (Ofertas & Destaques)"
-            description="Banner secundário / card de destaque exibido estrategicamente acima da listagem de produtos."
-            recommendation="800x350px ou proporção 2:1 (máx. 5MB)"
-            aspectRatioClass="aspect-[2.4/1]"
+            label="3. Banner de Promoção (Logo acima dos produtos)"
+            description="Banner secundário / card de ofertas disposto em destaque logo acima do catálogo de produtos."
+            recommendation="800x400px ou proporção 2:1 (máx. 5MB)"
+            aspectRatioClass="aspect-[2.2/1]"
             initialUrl={promoBannerUrl}
             onUploaded={(url) => setPromoBannerUrl(url)}
             onRemoved={() => setPromoBannerUrl(null)}
@@ -174,68 +174,70 @@ export function EmpresaClient({ tenant, settings, coupons: initialCoupons }: Pro
           </a>
         </div>
 
-        {/* Mockup do Topo da Vitrine */}
-        <div className="rounded-2xl border border-gray-200 overflow-hidden bg-gray-50 shadow-inner">
-          {/* Header Bar */}
+        {/* Mockup Fiel da Vitrine */}
+        <div className="rounded-3xl border border-gray-200 overflow-hidden bg-gray-50 shadow-inner">
+          {/* 1. Header com Superbanner de Fundo */}
           <div
-            className="h-20 w-full relative flex items-center justify-center transition-colors"
+            className="w-full relative min-h-[160px] rounded-b-2xl overflow-hidden bg-cover bg-center flex flex-col justify-between p-4"
             style={{
-              backgroundColor: settings.primaryColor || "#7C3AED",
+              backgroundColor: superBannerUrl ? "#18181b" : (settings.primaryColor || "#7C3AED"),
+              backgroundImage: superBannerUrl ? `url(${superBannerUrl})` : undefined,
             }}
           >
-            <div className="text-white/80 font-bold text-xs uppercase tracking-widest">
-              Cabeçalho ({settings.companyName})
-            </div>
-          </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/75" />
 
-          {/* Dados Resumidos e Avatar */}
-          <div className="p-4 bg-white space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-2xl border-2 border-white overflow-hidden bg-white -mt-10 shadow-md shrink-0 flex items-center justify-center">
+            {/* Top Bar Mockup */}
+            <div className="relative z-10 flex items-center justify-between text-white/90 text-xs">
+              <span className="font-bold tracking-tight bg-white/20 px-2 py-0.5 rounded-md">vitrinia</span>
+              <span className="text-[10px] bg-emerald-500/80 px-2 py-0.5 rounded-full font-bold">Aberto agora</span>
+            </div>
+
+            {/* Centro do Cabeçalho: Logo + Nome */}
+            <div className="relative z-10 flex flex-col items-center justify-center my-2 text-center">
+              <div className="w-14 h-14 bg-white rounded-full p-0.5 shadow-md flex items-center justify-center overflow-hidden border border-white">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-cover rounded-full" />
                 ) : (
                   <Store className="w-6 h-6 text-gray-400" />
                 )}
               </div>
-              <div>
-                <p className="font-bold text-gray-900 text-sm">{settings.companyName}</p>
-                <p className="text-[11px] text-gray-400 font-mono">/loja/{tenant.slug}</p>
-              </div>
+              <h3 className="text-white font-bold text-base mt-1.5 drop-shadow-sm">
+                {settings.companyName}
+              </h3>
+              <p className="text-[11px] text-white/80 font-medium">
+                Banner de Cabeçalho ativo
+              </p>
             </div>
+          </div>
 
-            {/* Mockup do Superbanner */}
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                Visualização do Superbanner
-              </span>
-              {superBannerUrl ? (
-                <div className="w-full aspect-[3/1] rounded-xl overflow-hidden border border-gray-200 shadow-xs">
-                  <img src={superBannerUrl} alt="Superbanner" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <div className="w-full py-4 px-3 rounded-xl border border-dashed border-purple-200 bg-purple-50/50 text-center">
-                  <p className="text-xs font-semibold text-purple-700">Placeholder elegante do Superbanner ativo</p>
-                  <p className="text-[10px] text-purple-400 mt-0.5">Faça o upload acima para substituir por sua arte personalizada</p>
-                </div>
-              )}
-            </div>
-
-            {/* Mockup do Promo Banner */}
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                Visualização do Banner de Promoção
+          {/* 2. Área do Conteúdo: Banner Promocional acima dos produtos */}
+          <div className="p-4 space-y-4">
+            <div>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                Banner de Promoção (Disposto acima dos produtos)
               </span>
               {promoBannerUrl ? (
-                <div className="w-full aspect-[2.4/1] rounded-xl overflow-hidden border border-gray-200 shadow-xs">
+                <div className="w-full aspect-[2.4/1] rounded-2xl overflow-hidden border border-gray-200 shadow-xs">
                   <img src={promoBannerUrl} alt="Banner de Promoção" className="w-full h-full object-cover" />
                 </div>
               ) : (
-                <div className="w-full py-3 px-3 rounded-xl border border-dashed border-orange-200 bg-orange-50/50 text-center">
-                  <p className="text-xs font-semibold text-orange-700">Placeholder elegante de Ofertas ativo</p>
-                  <p className="text-[10px] text-orange-400 mt-0.5">Banner secundário exibido no topo da listagem de produtos</p>
+                <div className="w-full py-4 px-3 rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 text-center">
+                  <p className="text-xs font-semibold text-orange-700">Banner de Promoção (Placeholder)</p>
+                  <p className="text-[10px] text-orange-400 mt-0.5">Faça o upload do banner de promoção para destacar ofertas aqui</p>
                 </div>
               )}
+            </div>
+
+            {/* Mockup de Categorias & Produtos */}
+            <div className="pt-2 border-t border-gray-200 space-y-2">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                Categorias & Produtos
+              </span>
+              <div className="flex gap-2">
+                <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-vitrinia-purple text-white">Todos</span>
+                <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-gray-200 text-gray-700">Destaques</span>
+                <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-gray-200 text-gray-700">Ofertas</span>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-gray-100 text-xs">

@@ -99,7 +99,7 @@ export default async function ConfigPage() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-bold text-gray-700">Superbanner Principal (URL)</label>
+                  <label className="block text-sm font-bold text-gray-700">Superbanner (Banner de Cabeçalho)</label>
                   <a href="/admin/empresa" className="text-[11px] font-bold text-vitrinia-purple hover:underline">
                     Upload →
                   </a>
@@ -107,14 +107,14 @@ export default async function ConfigPage() {
                 <input
                   type="url"
                   name="superBannerUrl"
-                  defaultValue={settings.superBannerUrl || ""}
+                  defaultValue={settings.superBannerUrl || settings.bannerUrl || ""}
                   placeholder="https://..."
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-vitrinia-purple/30 focus:border-vitrinia-purple outline-none transition text-sm"
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-bold text-gray-700">Banner de Promoção (URL)</label>
+                  <label className="block text-sm font-bold text-gray-700">Banner de Promoção (Acima dos Produtos)</label>
                   <a href="/admin/empresa" className="text-[11px] font-bold text-vitrinia-purple hover:underline">
                     Upload →
                   </a>
