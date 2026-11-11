@@ -232,6 +232,15 @@ model GlobalSettings {
   useSolidColorForHeader Boolean @default(false)
   storeNameColor         String? @default("#FFFFFF")
   storeSloganColor       String? @default("#FFFFFF")
+
+  // Card de Informações Adicionais da Vitrine (Info Bar)
+  storeAddress              String?
+  breakInterval             String? @default("12:00 - 13:30")
+  showHoursInCard           Boolean @default(true)
+  showSchedulingHoursInCard Boolean @default(false)
+  showAddressInCard         Boolean @default(true)
+  showBreakIntervalInCard   Boolean @default(false)
+  showRatingInCard          Boolean @default(true)
   // Tipo de negócio (usado para habilitar / desabilitar recursos)
   businessType   BusinessType @default(BOTH)
 

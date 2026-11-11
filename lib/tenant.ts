@@ -23,6 +23,13 @@ export interface TenantWithSettings {
     useSolidColorForHeader?: boolean | null;
     storeNameColor?: string | null;
     storeSloganColor?: string | null;
+    storeAddress?: string | null;
+    breakInterval?: string | null;
+    showHoursInCard?: boolean | null;
+    showSchedulingHoursInCard?: boolean | null;
+    showAddressInCard?: boolean | null;
+    showBreakIntervalInCard?: boolean | null;
+    showRatingInCard?: boolean | null;
     businessType: "PRODUCTS" | "SERVICES" | "BOTH";
     openingTime: string | null;
     closingTime: string | null;

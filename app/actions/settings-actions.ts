@@ -17,6 +17,13 @@ const VisualSettingsSchema = z.object({
   primaryColor: z.string().default("#7C3AED"),
   storeNameColor: z.string().optional(),
   storeSloganColor: z.string().optional(),
+  storeAddress: z.string().nullable().optional(),
+  breakInterval: z.string().nullable().optional(),
+  showHoursInCard: z.boolean().default(true),
+  showSchedulingHoursInCard: z.boolean().default(false),
+  showAddressInCard: z.boolean().default(true),
+  showBreakIntervalInCard: z.boolean().default(false),
+  showRatingInCard: z.boolean().default(true),
 });
 
 export async function updateStoreVisualSettings(formData: FormData): Promise<{ success: boolean; error?: string }> {
@@ -31,6 +38,13 @@ export async function updateStoreVisualSettings(formData: FormData): Promise<{ s
       primaryColor: (formData.get("primaryColor") as string) || "#7C3AED",
       storeNameColor: (formData.get("storeNameColor") as string) || "#FFFFFF",
       storeSloganColor: (formData.get("storeSloganColor") as string) || "#FFFFFF",
+      storeAddress: (formData.get("storeAddress") as string)?.trim() || null,
+      breakInterval: (formData.get("breakInterval") as string)?.trim() || "12:00 - 13:30",
+      showHoursInCard: formData.get("showHoursInCard") === "true" || formData.get("showHoursInCard") === "on",
+      showSchedulingHoursInCard: formData.get("showSchedulingHoursInCard") === "true" || formData.get("showSchedulingHoursInCard") === "on",
+      showAddressInCard: formData.get("showAddressInCard") === "true" || formData.get("showAddressInCard") === "on",
+      showBreakIntervalInCard: formData.get("showBreakIntervalInCard") === "true" || formData.get("showBreakIntervalInCard") === "on",
+      showRatingInCard: formData.get("showRatingInCard") === "true" || formData.get("showRatingInCard") === "on",
     };
 
     const parsed = VisualSettingsSchema.safeParse(rawData);
@@ -48,6 +62,13 @@ export async function updateStoreVisualSettings(formData: FormData): Promise<{ s
         primaryColor: parsed.data.primaryColor,
         storeNameColor: parsed.data.storeNameColor,
         storeSloganColor: parsed.data.storeSloganColor,
+        storeAddress: parsed.data.storeAddress,
+        breakInterval: parsed.data.breakInterval,
+        showHoursInCard: parsed.data.showHoursInCard,
+        showSchedulingHoursInCard: parsed.data.showSchedulingHoursInCard,
+        showAddressInCard: parsed.data.showAddressInCard,
+        showBreakIntervalInCard: parsed.data.showBreakIntervalInCard,
+        showRatingInCard: parsed.data.showRatingInCard,
       },
     });
 

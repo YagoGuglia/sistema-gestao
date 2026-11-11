@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { StoreHeader } from "@/components/vitrine/StoreHeader";
+import { StoreInfoBar } from "@/components/vitrine/StoreInfoBar";
 import { StorefrontClient } from "@/components/vitrine/StorefrontClient";
 import { Metadata } from "next";
 
@@ -81,6 +82,25 @@ export default async function StorefrontPage({ params }: { params: Promise<{ slu
         sloganColor={tenant.settings?.storeSloganColor || "#FFFFFF"}
         isOpen={(tenant.settings as any)?.isStoreOpen ?? true}
         whatsappNumber={tenant.settings?.whatsappNumber}
+      />
+
+      {/* Barra de Informações Adicionais (Info Bar entre Cabeçalho e Banner Promocional) */}
+      <StoreInfoBar
+        showHours={tenant.settings?.showHoursInCard ?? true}
+        hoursText={tenant.settings?.openingTime && tenant.settings?.closingTime ? `${tenant.settings.openingTime} às ${tenant.settings.closingTime}` : null}
+        showSchedulingHours={tenant.settings?.showSchedulingHoursInCard ?? false}
+        schedulingHoursText={tenant.settings?.schedulingStartTime && tenant.settings?.schedulingEndTime ? `Agendamento: ${tenant.settings.schedulingStartTime} às ${tenant.settings.schedulingEndTime}` : null}
+        showAddress={tenant.settings?.showAddressInCard ?? true}
+        addressText={tenant.settings?.storeAddress || null}
+        showBreakInterval={tenant.settings?.showBreakIntervalInCard ?? false}
+        breakIntervalText={tenant.settings?.breakInterval ? `Pausa: ${tenant.settings.breakInterval}` : null}
+        showRating={tenant.settings?.showRatingInCard ?? true}
+        ratingAverage={
+          tenant.reviews && tenant.reviews.length > 0
+            ? tenant.reviews.reduce((acc: number, r: any) => acc + (r.rating || 5), 0) / tenant.reviews.length
+            : 5.0
+        }
+        totalReviews={tenant.reviews?.length || 0}
       />
 
       <StorefrontClient 
